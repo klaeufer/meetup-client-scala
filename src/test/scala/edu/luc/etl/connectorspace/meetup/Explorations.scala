@@ -34,7 +34,7 @@ object Explorations extends App {
     val responseLength = response.body.length
     println(s"response length = ${responseLength}")
     val json = Json.parse(response.body)
-    println(json(0))
+    println(Json.prettyPrint(json(0)))
   }
 
   Await.ready(result, 10.second)
