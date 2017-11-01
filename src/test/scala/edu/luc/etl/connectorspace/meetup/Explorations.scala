@@ -4,9 +4,11 @@ import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import play.api.libs.json.Json
 import play.api.libs.ws.ahc._
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.io.Source
 
 object Explorations extends App {
@@ -28,11 +30,13 @@ object Explorations extends App {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   val wsClient = StandaloneAhcWSClient()
-  val result = wsClient.url(serviceUrl).get().map { response => response.body.length }
-  // TODO process response as JSON - https://www.playframework.com/documentation/2.6.x/ScalaWS
-
-  result.foreach { responseLength =>
+  val result = wsClient.url(serviceUrl).get().map { response =>
+    val responseLength = response.body.length
     println(s"response length = ${responseLength}")
-    sys.exit()
+    val json = Json.parse(response.body)
+    println(json(0))
   }
+
+  Await.ready(result, 10.second)
+  sys.exit()
 }
