@@ -25,19 +25,19 @@ case class Group(
   urlname: String
 )
 
-object Explorations extends App {
+object TimeAtEvents extends App {
 
-  println("hello")
+  println("retrieving access token")
 
   val PROP_FILE_NAME = "local.properties"
 
   val props = new Properties
   val reader = Source.fromFile(PROP_FILE_NAME).reader
   props.load(reader)
-  val apiKey = props.getProperty("apiKey")
-  val serviceUrl = s"https://api.meetup.com/self/events?key=${apiKey}&desc=true"
 
-  println(s"api key = ${apiKey}")
+  val accessToken = props.getProperty("accessToken")
+  val authHeader = "Authorization" -> s"Bearer ${accessToken}"
+  val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 
   implicit val system = ActorSystem()
   implicit val mat = ActorMaterializer()
@@ -46,12 +46,13 @@ object Explorations extends App {
   implicit val groupFormat = Json.format[Group]
   implicit val eventFormat = Json.format[Event]
 
+  println(s"submitting request to ${serviceUrl}")
+
   val wsClient = StandaloneAhcWSClient()
-  val result = wsClient.url(serviceUrl).get().map { response =>
+  val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
     val responseLength = response.body.length
     println(s"response length = ${responseLength}")
     val json = Json.parse(response.body)
-//    println(Json.prettyPrint(json))
 
     // TODO figure out why we need to map explicitly
     // val events = Json.fromJson[IndexedSeq[Event]](json)
@@ -66,6 +67,8 @@ object Explorations extends App {
     // TODO use nscala/joda for this calculation
     val timeAtEventsLastYear = eventsLastYear.map { _.duration / 1000 }.sum.toFloat / 3600
     println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
+
+    sys.exit()
   }
 
 //  import scala.concurrent.duration._
