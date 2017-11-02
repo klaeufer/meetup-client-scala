@@ -61,6 +61,11 @@ object Explorations extends App {
     val lastYear = DateTime.lastYear to DateTime.now
     val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
     println(s"found ${eventsLastYear.length} events last year")
+    println(eventsLastYear)
+
+    // TODO use nscala/joda for this calculation
+    val timeAtEventsLastYear = eventsLastYear.map { _.duration / 1000 }.sum.toFloat / 3600
+    println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
   }
 
 //  import scala.concurrent.duration._
