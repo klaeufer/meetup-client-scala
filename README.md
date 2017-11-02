@@ -17,6 +17,14 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
   - time spent at events per group
   - etc.
 
+# Example output
+
+```
+found 68 events total
+found 5 events last year
+spent a total of 7.25 hours at events last year
+```
+
 # Dependencies
 
 - play-ahc-ws (standalone)
