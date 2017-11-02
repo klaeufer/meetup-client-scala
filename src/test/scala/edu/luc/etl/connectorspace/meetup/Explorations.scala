@@ -35,7 +35,7 @@ object Explorations extends App {
   val reader = Source.fromFile(PROP_FILE_NAME).reader
   props.load(reader)
   val apiKey = props.getProperty("apiKey")
-  val serviceUrl = s"https://api.meetup.com/self/events?key=${apiKey}&desc=true&page=5"
+  val serviceUrl = s"https://api.meetup.com/self/events?key=${apiKey}&desc=true"
 
   println(s"api key = ${apiKey}")
 
@@ -51,12 +51,16 @@ object Explorations extends App {
     val responseLength = response.body.length
     println(s"response length = ${responseLength}")
     val json = Json.parse(response.body)
-    println(json.getClass)
-    println(Json.prettyPrint(json))
+//    println(Json.prettyPrint(json))
+
     // TODO figure out why we need to map explicitly
     // val events = Json.fromJson[IndexedSeq[Event]](json)
-    val events = json.as[JsArray].value.map { _.validate[Event] }
-    println(events)
+    val events = json.as[JsArray].value.map { _.validate[Event].asOpt }.flatten
+    println(s"found ${events.length} events total")
+
+    val lastYear = DateTime.lastYear to DateTime.now
+    val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
+    println(s"found ${eventsLastYear.length} events last year")
   }
 
 //  import scala.concurrent.duration._
