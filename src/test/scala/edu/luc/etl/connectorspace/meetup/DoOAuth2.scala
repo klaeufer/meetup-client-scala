@@ -65,8 +65,10 @@ object DoOAuth2 extends App {
       val json = Json.parse(response.body)
       println(Json.prettyPrint(json))
       val accessToken = json("access_token").as[String]
-      println(s"storing access token = ${accessToken}")
+      val refreshToken = json("refresh_token").as[String]
+      println(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
       props.setProperty("accessToken", accessToken)
+      props.setProperty("refreshToken", refreshToken)
       val pw = new PrintWriter(new File(PROP_FILE_NAME))
       props.store(pw, "updated OAuth2 access code")
 
