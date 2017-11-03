@@ -6,6 +6,7 @@ import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
+import com.typesafe.scalalogging.Logger
 import play.api.libs.json._
 import play.api.libs.ws.ahc._
 
@@ -13,7 +14,9 @@ import scala.io.{Source, StdIn}
 
 object DoOAuth2 extends App {
 
-  println("authenticating...")
+  val logger = Logger[TimeAtEvents.type]
+
+  logger.debug("authenticating...")
 
   val PROP_FILE_NAME = "local.properties"
 
@@ -23,8 +26,8 @@ object DoOAuth2 extends App {
   val clientId = props.getProperty("clientId")
   val clientSecret = props.getProperty("clientSecret")
 
-  println(s"clientId = ${clientId}")
-  println(s"clientSecret = ${clientSecret}")
+  logger.debug(s"clientId = ${clientId}")
+  logger.debug(s"clientSecret = ${clientSecret}")
 
   implicit val system = ActorSystem()
   implicit val mat = ActorMaterializer()
@@ -46,11 +49,13 @@ object DoOAuth2 extends App {
     val locationHeader = response.headers("Location")(0)
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
     val returnUri = URLDecoder.decode(locationQSMap("returnUri"))
+
     println(s"to authorize this client, visit ${returnUri})")
     println("in your browser and, if asked, press Allow")
     print("then copy and paste the string after http://localhost:8080/?code= here> ")
     val code = StdIn.readLine().trim()
-    println(s"using code ${code}")
+
+    logger.debug(s"using code ${code}")
 
     val tokenArgs = Map(
       "client_id" -> clientId,
@@ -59,14 +64,14 @@ object DoOAuth2 extends App {
       "redirect_uri" -> "http://localhost:8080",
       "code" -> code
     )
-    println(tokenArgs)
+    logger.debug(tokenArgs.toString)
 
     wsClient.url(tokenUrl).post(tokenArgs).map { response =>
       val json = Json.parse(response.body)
       println(Json.prettyPrint(json))
       val accessToken = json("access_token").as[String]
       val refreshToken = json("refresh_token").as[String]
-      println(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
+      logger.debug(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
       props.setProperty("accessToken", accessToken)
       props.setProperty("refreshToken", refreshToken)
       val pw = new PrintWriter(new File(PROP_FILE_NAME))
