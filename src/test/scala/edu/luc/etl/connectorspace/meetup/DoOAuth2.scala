@@ -10,7 +10,9 @@ import com.typesafe.scalalogging.Logger
 import play.api.libs.json._
 import play.api.libs.ws.ahc._
 
+import scala.concurrent.{Await, Promise}
 import scala.io.{Source, StdIn}
+import scala.util.Try
 
 object DoOAuth2 extends App {
 
@@ -39,45 +41,68 @@ object DoOAuth2 extends App {
   val tokenUrl = "https://secure.meetup.com/oauth2/access"
   val serviceUrl = "https://api.meetup.com/self/events"
 
-  implicit val groupFormat = Json.format[Group]
-  implicit val eventFormat = Json.format[Event]
-
   // TODO figure out how to write these successive requests sequentially (monadically)
   val wsClient = StandaloneAhcWSClient()
 
   wsClient.url(authUrl).withFollowRedirects(false).post(authArgs).map { response =>
+
+    val codePromise = Promise[String]()
+    val codeFuture = codePromise.future
+
+    logger.debug("creating NanoHTTPD instance")
+    import fi.iki.elonen.NanoHTTPD
+    object httpServer extends NanoHTTPD(8080) {
+      override def serve(session: NanoHTTPD.IHTTPSession) = {
+        logger.debug("NanoHTTPD got " + session.getParameters)
+        Try {
+          val code = session.getParameters.get("code").get(0)
+          codePromise.success(code)
+          NanoHTTPD.newFixedLengthResponse("authentication succeeded, please close this tab")
+        } getOrElse {
+          NanoHTTPD.newFixedLengthResponse("failed to get code")
+        }
+      }
+    }
+    logger.debug("starting NanoHTTPD")
+    httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
+    logger.debug("NanoHTTPD running at http://localhost:8080/")
+
     val locationHeader = response.headers("Location")(0)
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
     val returnUri = URLDecoder.decode(locationQSMap("returnUri"))
 
     println(s"to authorize this client, visit ${returnUri})")
     println("in your browser and, if asked, press Allow")
-    print("then copy and paste the string after http://localhost:8080/?code= here> ")
-    val code = StdIn.readLine().trim()
 
-    logger.debug(s"using code ${code}")
+    codeFuture.foreach { code =>
 
-    val tokenArgs = Map(
-      "client_id" -> clientId,
-      "client_secret" -> clientSecret,
-      "grant_type" -> "authorization_code",
-      "redirect_uri" -> "http://localhost:8080",
-      "code" -> code
-    )
-    logger.debug(tokenArgs.toString)
+      // wait for embedded server to shut down
+      Thread.sleep(200)
 
-    wsClient.url(tokenUrl).post(tokenArgs).map { response =>
-      val json = Json.parse(response.body)
-      println(Json.prettyPrint(json))
-      val accessToken = json("access_token").as[String]
-      val refreshToken = json("refresh_token").as[String]
-      logger.debug(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
-      props.setProperty("accessToken", accessToken)
-      props.setProperty("refreshToken", refreshToken)
-      val pw = new PrintWriter(new File(PROP_FILE_NAME))
-      props.store(pw, "updated OAuth2 access code")
+      httpServer.stop()
 
-      sys.exit()
+      val tokenArgs = Map(
+        "client_id" -> clientId,
+        "client_secret" -> clientSecret,
+        "grant_type" -> "authorization_code",
+        "redirect_uri" -> "http://localhost:8080",
+        "code" -> code
+      )
+      logger.debug(tokenArgs.toString)
+
+      wsClient.url(tokenUrl).post(tokenArgs).map { response =>
+        val json = Json.parse(response.body)
+        println(Json.prettyPrint(json))
+        val accessToken = json("access_token").as[String]
+        val refreshToken = json("refresh_token").as[String]
+        logger.debug(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
+        props.setProperty("accessToken", accessToken)
+        props.setProperty("refreshToken", refreshToken)
+        val pw = new PrintWriter(new File(PROP_FILE_NAME))
+        props.store(pw, "updated OAuth2 access code")
+
+        sys.exit()
+      }
     }
   }
 }
