@@ -1,7 +1,8 @@
 package edu.luc.etl.connectorspace.meetup
 
+import java.awt.Desktop
 import java.io.{File, PrintWriter}
-import java.net.URLDecoder
+import java.net.{URI, URLDecoder}
 import java.util.Properties
 
 import akka.actor.ActorSystem
@@ -71,8 +72,13 @@ object DoOAuth2 extends App {
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
     val returnUri = URLDecoder.decode(locationQSMap("returnUri"))
 
-    println(s"to authorize this client, visit ${returnUri})")
-    println("in your browser and, if asked, press Allow")
+    if (Desktop.isDesktopSupported) {
+      logger.debug(s"opening ${returnUri} with default system handler")
+      Desktop.getDesktop.browse(new URI(returnUri))
+    } else {
+      println(s"to authorize this client, visit ${returnUri}")
+      println("in your browser and, if asked, press Allow")
+    }
 
     codeFuture.foreach { code =>
 
