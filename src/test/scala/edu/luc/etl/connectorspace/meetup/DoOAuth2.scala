@@ -26,6 +26,14 @@ object DoOAuth2 extends App {
   val props = new Properties
   val reader = Source.fromFile(PROP_FILE_NAME).reader
   props.load(reader)
+
+  if (props.getProperty("accessToken") != null) {
+    Console.print("found existing OAuth2 access token - force update? [yN]")
+    if (StdIn.readLine().trim.toLowerCase != "y") {
+      sys.exit(2)
+    }
+  }
+
   val clientId = props.getProperty("clientId")
   val clientSecret = props.getProperty("clientSecret")
 
@@ -76,8 +84,8 @@ object DoOAuth2 extends App {
       logger.debug(s"opening ${returnUri} with default system handler")
       Desktop.getDesktop.browse(new URI(returnUri))
     } else {
-      println(s"to authorize this client, visit ${returnUri}")
-      println("in your browser and, if asked, press Allow")
+      Console.println(s"to authorize this client, visit ${returnUri}")
+      Console.println("in your browser and, if asked, press Allow")
     }
 
     codeFuture.foreach { code =>
@@ -98,14 +106,15 @@ object DoOAuth2 extends App {
 
       wsClient.url(tokenUrl).post(tokenArgs).map { response =>
         val json = Json.parse(response.body)
-        println(Json.prettyPrint(json))
+        logger.debug(Json.prettyPrint(json))
         val accessToken = json("access_token").as[String]
         val refreshToken = json("refresh_token").as[String]
         logger.debug(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
         props.setProperty("accessToken", accessToken)
         props.setProperty("refreshToken", refreshToken)
         val pw = new PrintWriter(new File(PROP_FILE_NAME))
-        props.store(pw, "updated OAuth2 access code")
+        props.store(pw, "updated OAuth2 access and refresn tokens")
+        Console.println("updated OAuth2 access and refresh tokens")
 
         sys.exit()
       }
