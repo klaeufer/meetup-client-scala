@@ -4,13 +4,12 @@ import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import play.api.libs.json._
-import play.api.libs.ws.ahc._
-
-import scala.concurrent.Await
-import scala.io.Source
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
+import play.api.libs.json._
+import play.api.libs.ws.ahc.AhcWSClient
+
+import scala.io.Source
 
 case class Event(
   time: Long,
@@ -70,10 +69,7 @@ object TimeAtEvents extends App {
     val timeAtEventsLastYear = eventsLastYear.map { _.duration / 1000 }.sum.toFloat / 3600
     Console.println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
 
-    sys.exit()
+    wsClient.close()
+    system.terminate()
   }
-
-//  import scala.concurrent.duration._
-//  Await.ready(result, 10.second)
-//  sys.exit()
 }

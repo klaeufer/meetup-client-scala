@@ -11,11 +11,11 @@ import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
 import play.api.libs.json.Json
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.{Action, Results}
-import play.core.server.{AkkaHttpServer, ServerConfig}
+import play.api.mvc.Results
 import play.api.routing.sird._
+import play.core.server.{AkkaHttpServer, ServerConfig}
 
-import scala.concurrent.{Await, Promise}
+import scala.concurrent.Promise
 import scala.io.{Source, StdIn}
 
 object DoOAuth2 extends App {
@@ -45,8 +45,9 @@ object DoOAuth2 extends App {
 
   implicit val system = ActorSystem()
   implicit val mat = ActorMaterializer()
-  import scala.concurrent.ExecutionContext.Implicits.global
   import play.api.libs.ws.DefaultBodyWritables._
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val authUrl = "https://secure.meetup.com/oauth2/authorize"
   val authArgs = Map("client_id" -> clientId, "response_type" -> "code", "redirect_uri" -> "http://localhost:8080")
@@ -65,17 +66,17 @@ object DoOAuth2 extends App {
       port = Some(8080),
       address = "0.0.0.0"
     )
-    logger.debug(s"creating and starting embedded netty instance ${config.address}")
+    logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
     val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>
       {
         case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
-          logger.debug(s"netty got ${code}")
+          logger.debug(s"HTTP server got ${code}")
           codePromise.success(code)
           Results.Ok("authentication succeeded, please close this tab")
         }
       }
     }
-    logger.debug(s"netty now running at ${config.address}")
+    logger.debug(s"HTTP server now running at ${config.address}")
 
     val locationHeader = response.headers("Location")(0)
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
@@ -91,10 +92,12 @@ object DoOAuth2 extends App {
 
     codeFuture.foreach { code =>
 
-      // wait for embedded server to shut down
+      logger.debug("waiting for pending request to complete before shutting down HTTP server")
       Thread.sleep(200)
 
       httpServer.stop()
+      logger.debug("HTTP server shut down")
+
 
       val tokenArgs = Map(
         "client_id" -> clientId,
@@ -114,7 +117,7 @@ object DoOAuth2 extends App {
         props.setProperty("accessToken", accessToken)
         props.setProperty("refreshToken", refreshToken)
         val pw = new PrintWriter(new File(PROP_FILE_NAME))
-        props.store(pw, "updated OAuth2 access and refresn tokens")
+        props.store(pw, "updated OAuth2 access and refresh tokens")
         Console.println("updated OAuth2 access and refresh tokens")
 
         wsClient.close()
