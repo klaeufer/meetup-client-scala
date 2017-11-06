@@ -50,7 +50,7 @@ object TimeAtEvents extends App {
 
   logger.debug(s"submitting request to ${serviceUrl}")
 
-  val wsClient = StandaloneAhcWSClient()
+  val wsClient = AhcWSClient()
   val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
     val responseLength = response.body.length
     logger.debug(s"response length = ${responseLength}")

@@ -10,10 +10,12 @@ import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
 import play.api.libs.json._
 import play.api.libs.ws.ahc._
+import play.api.mvc.{Action, Results}
+import play.core.server.{NettyServer, ServerConfig}
+import play.api.routing.sird._
 
 import scala.concurrent.{Await, Promise}
 import scala.io.{Source, StdIn}
-import scala.util.Try
 
 object DoOAuth2 extends App {
 
@@ -51,30 +53,26 @@ object DoOAuth2 extends App {
   val serviceUrl = "https://api.meetup.com/self/events"
 
   // TODO figure out how to write these successive requests sequentially (monadically)
-  val wsClient = StandaloneAhcWSClient()
+  val wsClient = AhcWSClient()
 
   wsClient.url(authUrl).withFollowRedirects(false).post(authArgs).map { response =>
 
     val codePromise = Promise[String]()
     val codeFuture = codePromise.future
 
-    logger.debug("creating NanoHTTPD instance")
-    import fi.iki.elonen.NanoHTTPD
-    object httpServer extends NanoHTTPD(8080) {
-      override def serve(session: NanoHTTPD.IHTTPSession) = {
-        logger.debug("NanoHTTPD got " + session.getParameters)
-        Try {
-          val code = session.getParameters.get("code").get(0)
-          codePromise.success(code)
-          NanoHTTPD.newFixedLengthResponse("authentication succeeded, please close this tab")
-        } getOrElse {
-          NanoHTTPD.newFixedLengthResponse("failed to get code")
-        }
+    val config = ServerConfig(
+      port = Some(8080),
+      address = "0.0.0.0"
+    )
+    logger.debug(s"creating and starting embedded netty instance ${config.address}")
+    val httpServer = NettyServer.fromRouter(config) {
+      case GET(p"/" ? q"code=$code") => Action {
+        logger.debug(s"netty got ${code}")
+        codePromise.success(code)
+        Results.Ok("authentication succeeded, please close this tab")
       }
     }
-    logger.debug("starting NanoHTTPD")
-    httpServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
-    logger.debug("NanoHTTPD running at http://localhost:8080/")
+    logger.debug(s"netty now running at ${config.address}")
 
     val locationHeader = response.headers("Location")(0)
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
@@ -116,7 +114,9 @@ object DoOAuth2 extends App {
         props.store(pw, "updated OAuth2 access and refresn tokens")
         Console.println("updated OAuth2 access and refresh tokens")
 
-        sys.exit()
+        system.terminate().map {
+          sys.exit()
+        }
       }
     }
   }
