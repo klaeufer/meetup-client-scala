@@ -3,15 +3,16 @@ package edu.luc.etl.connectorspace.meetup
 import java.awt.Desktop
 import java.io.{File, PrintWriter}
 import java.net.{URI, URLDecoder}
+import java.nio.charset.StandardCharsets
 import java.util.Properties
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
-import play.api.libs.json._
-import play.api.libs.ws.ahc._
+import play.api.libs.json.Json
+import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.{Action, Results}
-import play.core.server.{NettyServer, ServerConfig}
+import play.core.server.{AkkaHttpServer, ServerConfig}
 import play.api.routing.sird._
 
 import scala.concurrent.{Await, Promise}
@@ -65,18 +66,20 @@ object DoOAuth2 extends App {
       address = "0.0.0.0"
     )
     logger.debug(s"creating and starting embedded netty instance ${config.address}")
-    val httpServer = NettyServer.fromRouter(config) {
-      case GET(p"/" ? q"code=$code") => Action {
-        logger.debug(s"netty got ${code}")
-        codePromise.success(code)
-        Results.Ok("authentication succeeded, please close this tab")
+    val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>
+      {
+        case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
+          logger.debug(s"netty got ${code}")
+          codePromise.success(code)
+          Results.Ok("authentication succeeded, please close this tab")
+        }
       }
     }
     logger.debug(s"netty now running at ${config.address}")
 
     val locationHeader = response.headers("Location")(0)
     val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2) ; arr(0) -> arr(1) }.toMap
-    val returnUri = URLDecoder.decode(locationQSMap("returnUri"))
+    val returnUri = URLDecoder.decode(locationQSMap("returnUri"), StandardCharsets.UTF_8.name)
 
     if (Desktop.isDesktopSupported) {
       logger.debug(s"opening ${returnUri} with default system handler")
@@ -114,9 +117,8 @@ object DoOAuth2 extends App {
         props.store(pw, "updated OAuth2 access and refresn tokens")
         Console.println("updated OAuth2 access and refresh tokens")
 
-        system.terminate().map {
-          sys.exit()
-        }
+        wsClient.close()
+        system.terminate()
       }
     }
   }
