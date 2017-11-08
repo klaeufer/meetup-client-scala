@@ -30,13 +30,11 @@ object TimeAtEvents extends App {
 
   logger.debug("retrieving access token")
 
-  val PROP_FILE_NAME = "local.properties"
-
   val props = new Properties
-  val reader = Source.fromFile(PROP_FILE_NAME).reader
+  val reader = Source.fromFile(PropFileName).reader
   props.load(reader)
 
-  val accessToken = props.getProperty("accessToken")
+  val accessToken = props.getProperty(KeyAccessToken)
   val authHeader = "Authorization" -> s"Bearer ${accessToken}"
   val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 

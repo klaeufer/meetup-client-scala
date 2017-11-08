@@ -24,24 +24,22 @@ object DoOAuth2 extends App {
 
   logger.debug("authenticating...")
 
-  val PROP_FILE_NAME = "local.properties"
-
   val props = new Properties
-  val reader = Source.fromFile(PROP_FILE_NAME).reader
+  val reader = Source.fromFile(PropFileName).reader
   props.load(reader)
 
-  if (props.getProperty("accessToken") != null) {
+  if (props.getProperty(KeyAccessToken) != null) {
     Console.print("found existing OAuth2 access token - force update? [yN]")
     if (StdIn.readLine().trim.toLowerCase != "y") {
       sys.exit(2)
     }
   }
 
-  val clientId = props.getProperty("clientId")
-  val clientSecret = props.getProperty("clientSecret")
+  val clientId = props.getProperty(KeyClientId)
+  val clientSecret = props.getProperty(KeyClientSecret)
 
-  logger.debug(s"clientId = ${clientId}")
-  logger.debug(s"clientSecret = ${clientSecret}")
+  logger.debug(s"${KeyClientId} = ${clientId}")
+  logger.debug(s"${KeyClientSecret} = ${clientSecret}")
 
   implicit val system = ActorSystem()
   implicit val mat = ActorMaterializer()
@@ -49,21 +47,22 @@ object DoOAuth2 extends App {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  val authUrl = "https://secure.meetup.com/oauth2/authorize"
-  val authArgs = Map("client_id" -> clientId, "response_type" -> "code", "redirect_uri" -> "http://localhost:8080")
-  val tokenUrl = "https://secure.meetup.com/oauth2/access"
-  val serviceUrl = "https://api.meetup.com/self/events"
+  val authArgs = Map(
+    "client_id" -> clientId,
+    "response_type" -> "code",
+    "redirect_uri" -> RedirectUrl
+  )
 
   // TODO figure out how to write these successive requests sequentially (monadically)
   val wsClient = AhcWSClient()
 
-  wsClient.url(authUrl).withFollowRedirects(false).post(authArgs).map { response =>
+  wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs).map { response =>
 
     val codePromise = Promise[String]()
     val codeFuture = codePromise.future
 
     val config = ServerConfig(
-      port = Some(8080),
+      port = Some(ServerPort),
       address = "0.0.0.0"
     )
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
@@ -103,20 +102,20 @@ object DoOAuth2 extends App {
         "client_id" -> clientId,
         "client_secret" -> clientSecret,
         "grant_type" -> "authorization_code",
-        "redirect_uri" -> "http://localhost:8080",
+        "redirect_uri" -> RedirectUrl,
         "code" -> code
       )
       logger.debug(tokenArgs.toString)
 
-      wsClient.url(tokenUrl).post(tokenArgs).map { response =>
+      wsClient.url(TokenUrl).post(tokenArgs).map { response =>
         val json = Json.parse(response.body)
         logger.debug(Json.prettyPrint(json))
         val accessToken = json("access_token").as[String]
         val refreshToken = json("refresh_token").as[String]
         logger.debug(s"storing access and refresh tokens = ${accessToken} ${refreshToken}")
-        props.setProperty("accessToken", accessToken)
-        props.setProperty("refreshToken", refreshToken)
-        val pw = new PrintWriter(new File(PROP_FILE_NAME))
+        props.setProperty(KeyAccessToken, accessToken)
+        props.setProperty(KeyRefreshToken, refreshToken)
+        val pw = new PrintWriter(new File(PropFileName))
         props.store(pw, "updated OAuth2 access and refresh tokens")
         Console.println("updated OAuth2 access and refresh tokens")
 
