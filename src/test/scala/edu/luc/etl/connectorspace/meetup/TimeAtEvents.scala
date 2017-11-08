@@ -24,50 +24,57 @@ case class Group(
   urlname: String
 )
 
-object TimeAtEvents extends App {
+object TimeAtEvents {
 
-  val logger = Logger[TimeAtEvents.type]
+  def run(): Unit = {
 
-  logger.debug("retrieving access token")
+    val logger = Logger[TimeAtEvents.type]
 
-  val props = new Properties
-  val reader = Source.fromFile(PropFileName).reader
-  props.load(reader)
+    logger.debug("retrieving access token")
 
-  val accessToken = props.getProperty(KeyAccessToken)
-  val authHeader = "Authorization" -> s"Bearer ${accessToken}"
-  val serviceUrl = "https://api.meetup.com/self/events?desc=true"
+    val props = new Properties
+    val reader = Source.fromFile(PropFileName).reader
+    props.load(reader)
 
-  implicit val system = ActorSystem()
-  implicit val mat = ActorMaterializer()
-  import scala.concurrent.ExecutionContext.Implicits.global
+    val accessToken = props.getProperty(KeyAccessToken)
+    val authHeader = "Authorization" -> s"Bearer ${accessToken}"
+    val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 
-  implicit val groupFormat = Json.format[Group]
-  implicit val eventFormat = Json.format[Event]
+    implicit val system = ActorSystem()
+    implicit val mat = ActorMaterializer()
+    import scala.concurrent.ExecutionContext.Implicits.global
 
-  logger.debug(s"submitting request to ${serviceUrl}")
+    implicit val groupFormat = Json.format[Group]
+    implicit val eventFormat = Json.format[Event]
 
-  val wsClient = AhcWSClient()
-  val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
-    val responseLength = response.body.length
-    logger.debug(s"response length = ${responseLength}")
-    val json = Json.parse(response.body)
+    logger.debug(s"submitting request to ${serviceUrl}")
 
-    // TODO figure out why we need to map explicitly
-    // val events = Json.fromJson[IndexedSeq[Event]](json)
-    val events = json.as[JsArray].value.map { _.validate[Event].asOpt }.flatten
-    logger.debug(s"found ${events.length} events total")
+    val wsClient = AhcWSClient()
+    val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
+      val responseLength = response.body.length
+      logger.debug(s"response length = ${responseLength}")
+      val json = Json.parse(response.body)
 
-    val lastYear = DateTime.lastYear to DateTime.now
-    val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
-    Console.println(s"found ${eventsLastYear.length} events last year")
-    logger.debug(eventsLastYear.toString)
+      // TODO figure out why we need to map explicitly
+      // val events = Json.fromJson[IndexedSeq[Event]](json)
+      val events = json.as[JsArray].value.map {
+        _.validate[Event].asOpt
+      }.flatten
+      logger.debug(s"found ${events.length} events total")
 
-    // TODO use nscala/joda for this calculation
-    val timeAtEventsLastYear = eventsLastYear.map { _.duration / 1000 }.sum.toFloat / 3600
-    Console.println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
+      val lastYear = DateTime.lastYear to DateTime.now
+      val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
+      Console.println(s"found ${eventsLastYear.length} events last year")
+      logger.debug(eventsLastYear.toString)
 
-    wsClient.close()
-    system.terminate()
+      // TODO use nscala/joda for this calculation
+      val timeAtEventsLastYear = eventsLastYear.map {
+        _.duration / 1000
+      }.sum.toFloat / 3600
+      Console.println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
+
+      wsClient.close()
+      system.terminate()
+    }
   }
 }

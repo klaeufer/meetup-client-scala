@@ -2,6 +2,10 @@ package edu.luc.etl.connectorspace
 
 package object meetup {
 
+  val AppName = "meetupConnector"
+
+  val AppVersion = "0.1"
+
   val PropFileName = "local.properties"
 
   val KeyClientId = "clientId"
