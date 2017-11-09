@@ -24,11 +24,11 @@ case class Group(
   urlname: String
 )
 
-object TimeAtEvents {
+object CliClient {
 
   def run(): Unit = {
 
-    val logger = Logger[TimeAtEvents.type]
+    val logger = Logger[CliClient.type]
 
     logger.debug("retrieving access token")
 
@@ -37,7 +37,7 @@ object TimeAtEvents {
     props.load(reader)
 
     val accessToken = props.getProperty(KeyAccessToken)
-    val authHeader = "Authorization" -> s"Bearer ${accessToken}"
+    val authHeader = "Authorization" -> s"Bearer $accessToken"
     val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 
     implicit val system = ActorSystem()
@@ -47,19 +47,17 @@ object TimeAtEvents {
     implicit val groupFormat = Json.format[Group]
     implicit val eventFormat = Json.format[Event]
 
-    logger.debug(s"submitting request to ${serviceUrl}")
+    logger.debug(s"submitting request to $serviceUrl")
 
     val wsClient = AhcWSClient()
     val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
       val responseLength = response.body.length
-      logger.debug(s"response length = ${responseLength}")
+      logger.debug(s"response length = $responseLength")
       val json = Json.parse(response.body)
 
       // TODO figure out why we need to map explicitly
       // val events = Json.fromJson[IndexedSeq[Event]](json)
-      val events = json.as[JsArray].value.map {
-        _.validate[Event].asOpt
-      }.flatten
+      val events = json.as[JsArray].value.flatMap { _.validate[Event].asOpt }
       logger.debug(s"found ${events.length} events total")
 
       val lastYear = DateTime.lastYear to DateTime.now
@@ -71,7 +69,7 @@ object TimeAtEvents {
       val timeAtEventsLastYear = eventsLastYear.map {
         _.duration / 1000
       }.sum.toFloat / 3600
-      Console.println(s"spent a total of ${timeAtEventsLastYear} hours at events last year")
+      Console.println(s"spent a total of $timeAtEventsLastYear hours at events last year")
 
       wsClient.close()
       system.terminate()

@@ -34,14 +34,8 @@ object Main extends App {
   }
 
   parser.parse(args, Config()).foreach {
-    case Config(true, false, false) => {
-      OAuth2.run()
-    }
-    case Config(false, true, false) => {
-      TimeAtEvents.run()
-    }
-    case Config(false, false, true) => {
-      Console.err.println("web microservice NYI")
-    }
+    case Config(true, false, false) => OAuth2.run()
+    case Config(false, true, false) => CliClient.run()
+    case Config(false, false, true) => WebService.run()
   }
 }
