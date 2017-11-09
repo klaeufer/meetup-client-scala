@@ -15,8 +15,9 @@ package object meetup {
 
   val AuthUrl = "https://secure.meetup.com/oauth2/authorize"
   val TokenUrl = "https://secure.meetup.com/oauth2/access"
-  val ServerPort = 8080
-  val RedirectUrl = s"http://localhost:$ServerPort"
+  val RedirectServerPort = 8087
+  val RedirectUrl = s"http://localhost:$RedirectServerPort"
+  val WebServerPort = 8080
 
   case class Event(
     time: Long,

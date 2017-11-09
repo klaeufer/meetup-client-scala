@@ -7,7 +7,9 @@ import play.api.mvc.Results
 import play.api.libs.json._
 import play.api.routing.sird._
 import play.core.server.{ AkkaHttpServer, ServerConfig }
+
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Properties
 
 object WebService extends MeetupAPIClient {
 
@@ -22,7 +24,7 @@ object WebService extends MeetupAPIClient {
     val logger = Logger[WebService.type]
 
     val config = ServerConfig(
-      port = Some(ServerPort),
+      port = Some(WebServerPort),
       address = "0.0.0.0"
     )
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
@@ -30,7 +32,11 @@ object WebService extends MeetupAPIClient {
       {
         case GET(p"/effort" ? q"from=$from" & q_?"to=$to") => components.defaultActionBuilder.async {
           logger.debug(s"retrieving events from $from to $to")
-          timeAtEventsLastYear().map(effort => Results.Ok(Json.toJson(effort)))
+          timeAtEventsLastYear().map { effort =>
+            Results.Ok(Json.toJson(effort))
+          } recover {
+            case ex => Results.InternalServerError(ex.getStackTrace.mkString(Properties.lineSeparator))
+          }
         }
       }
     }

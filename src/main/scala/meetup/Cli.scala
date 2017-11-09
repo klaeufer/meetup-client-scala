@@ -13,12 +13,14 @@ object Cli extends MeetupAPIClient {
   override lazy val wsClient = AhcWSClient()
 
   def run(): Unit = {
-    timeAtEventsLastYear().foreach { effort =>
+    timeAtEventsLastYear().map { effort =>
       val time = effort.effort.toStandardMinutes.toPeriod
       val timeString = PeriodFormat.getDefault.print(time)
       Console.println(s"spent a total of $timeString at events last year")
       wsClient.close()
       system.terminate()
+    } recover {
+      case ex => ex.printStackTrace()
     }
   }
 }

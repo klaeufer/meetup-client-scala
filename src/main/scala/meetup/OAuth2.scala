@@ -62,7 +62,7 @@ object OAuth2 {
       val codeFuture = codePromise.future
 
       val config = ServerConfig(
-        port = Some(ServerPort),
+        port = Some(RedirectServerPort),
         address = "0.0.0.0"
       )
       logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")

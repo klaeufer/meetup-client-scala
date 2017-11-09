@@ -51,6 +51,8 @@ trait MeetupAPIClient {
     logger.debug(s"submitting request to $serviceUrl")
 
     wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
+      // TODO case distinction between OK and others, such as Unauthorized
+      // TODO probably need to return Try[Effort]
       val responseLength = response.body.length
       logger.debug(s"response length = $responseLength")
       val json = Json.parse(response.body)
