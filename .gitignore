@@ -1,78 +1,34 @@
-## generic files to ignore
-*~
-*.lock
-*.DS_Store
-*.swp
-*.out
+# built application files
+*.apk
+*.ap_
 
-# rails specific
-*.sqlite3
-config/database.yml
-log/*
-tmp/*
+# files for the dex VM
+*.dex
 
-# java specific
+# Java class files
 *.class
 
-# python specific
-*.pyc
-
-# xcode/iphone specific
-build/*
-*.pbxuser
-*.mode2v3
-*.mode1v3
-*.perspective
-*.perspectivev3
-*~.nib
-
-# akka specific
-logs/*
-
-# sbt specific
+# generated files
+bin/
+gen/
+logs/
+proguard_cache/
 target/
-lib_managed/
-src_managed/
-project/boot
-project/build/target
-project/build/lib_managed
-project/build/src_managed
-project/plugins/lib_managed
-project/plugins/target
-project/plugins/src_managed
-project/plugins/project
+tmp/
 
-core/lib_managed
-core/target
-pubsub/lib_managed
-pubsub/target
-
-# eclipse specific
-.metadata
-jrebel.lic
-.settings
+# Local configuration file (sdk path, etc)
+local.properties
+.cache/
 .classpath
 .project
-
-.ensime*
-*.sublime-*
-.cache
-
-# intellij
-*.eml
+.settings/
 *.iml
-*.ipr
-*.iws
-.*.sw?
-.idea
+.idea/
+local.sbt
 
-# netbeans
-.classpath_nb
+# Emacs files
+*~
+\#*\#
 
-# paulp script
-/.lib/
-
-# Travis CI
-.dpl
-
-local.properties
+# Mac files
+.DS_Store

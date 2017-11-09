@@ -1,8 +1,8 @@
 package edu.luc.etl.connectorspace.meetup
 
 import java.awt.Desktop
-import java.io.{File, PrintWriter}
-import java.net.{URI, URLDecoder}
+import java.io.{ File, PrintWriter }
+import java.net.{ URI, URLDecoder }
 import java.nio.charset.StandardCharsets
 import java.util.Properties
 
@@ -13,10 +13,10 @@ import play.api.libs.json.Json
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Results
 import play.api.routing.sird._
-import play.core.server.{AkkaHttpServer, ServerConfig}
+import play.core.server.{ AkkaHttpServer, ServerConfig }
 
 import scala.concurrent.Promise
-import scala.io.{Source, StdIn}
+import scala.io.{ Source, StdIn }
 
 object OAuth2 {
 
@@ -66,13 +66,14 @@ object OAuth2 {
         address = "0.0.0.0"
       )
       logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
-      val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components => {
-        case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
-          logger.debug(s"HTTP server got $code")
-          codePromise.success(code)
-          Results.Ok("authentication succeeded, please close this tab")
+      val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>
+        {
+          case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
+            logger.debug(s"HTTP server got $code")
+            codePromise.success(code)
+            Results.Ok("authentication succeeded, please close this tab")
+          }
         }
-      }
       }
       logger.debug(s"HTTP server now running at ${config.address}")
 
@@ -95,7 +96,6 @@ object OAuth2 {
 
         httpServer.stop()
         logger.debug("HTTP server shut down")
-
 
         val tokenArgs = Map(
           "client_id" -> clientId,

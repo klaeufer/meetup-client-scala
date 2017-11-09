@@ -7,28 +7,36 @@ import akka.stream.ActorMaterializer
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import play.api.libs.ws.ahc.AhcWSClient
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
 
-case class Event(
-  time: Long,
-  duration: Long,
-  name: String,
-  group: Group
-)
+trait MeetupAPIClient {
 
-case class Group(
-  name: String,
-  id: Int,
-  urlname: String
-)
+  implicit def system: ActorSystem
 
-object CliClient {
+  implicit val mat = ActorMaterializer()
 
-  def run(): Unit = {
+  def wsClient: AhcWSClient
 
-    val logger = Logger[CliClient.type]
+  implicit val groupFormat = Json.format[Group]
+
+  implicit val eventFormat = Json.format[Event]
+
+  implicit val effortWrites = new Writes[Effort] {
+    def writes(effort: Effort) = Json.obj(
+      "from" -> effort.from.getMillis,
+      "to" -> effort.to.getMillis,
+      "effort" -> effort.effort.getMillis
+    )
+  }
+
+  def timeAtEventsLastYear(): Future[Effort] = {
+
+    val logger = Logger("MeetupAPIClient")
 
     logger.debug("retrieving access token")
 
@@ -40,17 +48,9 @@ object CliClient {
     val authHeader = "Authorization" -> s"Bearer $accessToken"
     val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 
-    implicit val system = ActorSystem()
-    implicit val mat = ActorMaterializer()
-    import scala.concurrent.ExecutionContext.Implicits.global
-
-    implicit val groupFormat = Json.format[Group]
-    implicit val eventFormat = Json.format[Event]
-
     logger.debug(s"submitting request to $serviceUrl")
 
-    val wsClient = AhcWSClient()
-    val result = wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
+    wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
       val responseLength = response.body.length
       logger.debug(s"response length = $responseLength")
       val json = Json.parse(response.body)
@@ -66,13 +66,8 @@ object CliClient {
       logger.debug(eventsLastYear.toString)
 
       // TODO use nscala/joda for this calculation
-      val timeAtEventsLastYear = eventsLastYear.map {
-        _.duration / 1000
-      }.sum.toFloat / 3600
-      Console.println(s"spent a total of $timeAtEventsLastYear hours at events last year")
-
-      wsClient.close()
-      system.terminate()
+      val durationMillis = eventsLastYear.map { _.duration }.sum
+      Effort(DateTime.lastYear, DateTime.now, Duration.millis(durationMillis))
     }
   }
 }
