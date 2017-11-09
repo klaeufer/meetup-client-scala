@@ -27,15 +27,15 @@ object Main extends App {
     }.text("run as a web microservice")
 
     checkConfig {
-      case Config(a, c, s) if Seq(a, c, s).count(identity) != 1 =>
-        failure("exactly one mode flag is required")
+      case Config(a, c, s) if Seq(a, c, s).count(identity) > 1 =>
+        failure("at most one mode flag is required")
       case _ => success
     }
   }
 
   parser.parse(args, Config()).foreach {
     case Config(true, false, false) => OAuth2.run()
-    case Config(false, true, false) => Cli.run()
+    case Config(false, _, false)    => Cli.run()
     case Config(false, false, true) => WebService.run()
   }
 }
