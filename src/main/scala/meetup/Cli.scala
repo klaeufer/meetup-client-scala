@@ -1,12 +1,15 @@
 package edu.luc.etl.connectorspace.meetup
 
 import akka.actor.ActorSystem
+import com.typesafe.scalalogging.Logger
 import org.joda.time.format.PeriodFormat
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object Cli extends MeetupAPIClient {
+
+  val logger = Logger[Cli.type]
 
   override lazy val system = ActorSystem()
 

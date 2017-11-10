@@ -16,6 +16,8 @@ import scala.io.Source
 
 trait MeetupAPIClient {
 
+  def logger: Logger
+
   implicit def system: ActorSystem
 
   implicit val mat = ActorMaterializer()
@@ -35,8 +37,6 @@ trait MeetupAPIClient {
   }
 
   def timeAtEventsLastYear(): Future[Effort] = {
-
-    val logger = Logger("MeetupAPIClient")
 
     logger.debug("retrieving access token")
 
@@ -64,7 +64,7 @@ trait MeetupAPIClient {
 
       val lastYear = DateTime.lastYear to DateTime.now
       val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
-      Console.println(s"found ${eventsLastYear.length} events last year")
+      logger.debug(s"found ${eventsLastYear.length} events last year")
       logger.debug(eventsLastYear.toString)
 
       // TODO use nscala/joda for this calculation

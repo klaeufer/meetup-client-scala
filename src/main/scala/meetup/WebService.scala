@@ -13,6 +13,8 @@ import scala.util.Properties
 
 object WebService extends MeetupAPIClient {
 
+  override val logger = Logger[WebService.type]
+
   override def system = ActorSystem()
 
   override def wsClient = AhcWSClient()
@@ -20,8 +22,6 @@ object WebService extends MeetupAPIClient {
   case class Effort()
 
   def run(): Unit = {
-
-    val logger = Logger[WebService.type]
 
     val config = ServerConfig(
       port = Some(WebServerPort),
