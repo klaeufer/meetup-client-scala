@@ -35,7 +35,8 @@ object WebService extends MeetupAPIClient {
           timeAtEventsLastYear().map { effort =>
             Results.Ok(Json.toJson(effort))
           } recover {
-            case ex => Results.InternalServerError(ex.getStackTrace.mkString(Properties.lineSeparator))
+            case ex =>
+              Results.InternalServerError(ex.getStackTrace.mkString(Properties.lineSeparator))
           }
         }
       }

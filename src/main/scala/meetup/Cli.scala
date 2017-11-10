@@ -17,10 +17,11 @@ object Cli extends MeetupAPIClient {
       val time = effort.effort.toStandardMinutes.toPeriod
       val timeString = PeriodFormat.getDefault.print(time)
       Console.println(s"spent a total of $timeString at events last year")
-      wsClient.close()
-      system.terminate()
     } recover {
       case ex => ex.printStackTrace()
+    } foreach { _ =>
+      wsClient.close()
+      system.terminate()
     }
   }
 }
