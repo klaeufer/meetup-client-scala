@@ -2,6 +2,8 @@ package edu.luc.etl.connectorspace.meetup
 
 import akka.actor.ActorSystem
 import com.typesafe.scalalogging.Logger
+import com.github.nscala_time.time.Imports._
+import org.joda.time.DateTime.{ parse => parseDateTime }
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Results
 import play.api.libs.json._
@@ -19,8 +21,6 @@ object WebService extends MeetupAPIClient {
 
   override def wsClient = AhcWSClient()
 
-  case class Effort()
-
   def run(): Unit = {
 
     val config = ServerConfig(
@@ -30,9 +30,12 @@ object WebService extends MeetupAPIClient {
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
     AkkaHttpServer.fromRouterWithComponents(config) { components =>
       {
-        case GET(p"/effort" ? q"from=$from" & q_?"to=$to") => components.defaultActionBuilder.async {
-          logger.debug(s"retrieving events from $from to $to")
-          timeAtEventsLastYear().map { effort =>
+        case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$toString") => components.defaultActionBuilder async {
+          logger.debug(s"retrieving events from $fromString to $toString")
+          val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
+          val toDateTime = toString map parseDateTime getOrElse DateTime.now
+          val interval = fromDateTime to toDateTime
+          timeAtEventsDuring(interval) map { effort =>
             Results.Ok(Json.toJson(effort))
           } recover {
             case ex =>

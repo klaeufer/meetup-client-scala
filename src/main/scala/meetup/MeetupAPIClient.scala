@@ -7,7 +7,6 @@ import akka.stream.ActorMaterializer
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Future
@@ -36,7 +35,7 @@ trait MeetupAPIClient {
     )
   }
 
-  def timeAtEventsLastYear(): Future[Effort] = {
+  def timeAtEventsDuring(interval: Interval): Future[Effort] = {
 
     logger.debug("retrieving access token")
 
@@ -50,7 +49,7 @@ trait MeetupAPIClient {
 
     logger.debug(s"submitting request to $serviceUrl")
 
-    wsClient.url(serviceUrl).addHttpHeaders(authHeader).get().map { response =>
+    wsClient.url(serviceUrl).addHttpHeaders(authHeader).get() map { response =>
       // TODO case distinction between OK and others, such as Unauthorized
       // TODO probably need to return Try[Effort]
       val responseLength = response.body.length
@@ -59,17 +58,15 @@ trait MeetupAPIClient {
 
       // TODO figure out why we need to map explicitly
       // val events = Json.fromJson[IndexedSeq[Event]](json)
-      val events = json.as[JsArray].value.flatMap { _.validate[Event].asOpt }
+      val events = json.as[JsArray].value flatMap { _.validate[Event].asOpt }
       logger.debug(s"found ${events.length} events total")
 
-      val lastYear = DateTime.lastYear to DateTime.now
-      val eventsLastYear = events.filter { event => lastYear.contains(event.time) }
-      logger.debug(s"found ${eventsLastYear.length} events last year")
-      logger.debug(eventsLastYear.toString)
+      val eventsDuringInterval = events filter { event => interval.contains(event.time) }
+      logger.debug(s"found ${eventsDuringInterval.length} events last during $interval")
+      logger.debug(eventsDuringInterval.toString)
 
-      // TODO use nscala/joda for this calculation
-      val durationMillis = eventsLastYear.map { _.duration }.sum
-      Effort(DateTime.lastYear, DateTime.now, Duration.millis(durationMillis))
+      val durationMillis = eventsDuringInterval.map { _.duration }.sum
+      Effort(interval.start, interval.end, Duration.millis(durationMillis))
     }
   }
 }

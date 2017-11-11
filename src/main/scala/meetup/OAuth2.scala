@@ -21,6 +21,7 @@ import scala.io.{ Source, StdIn }
 object OAuth2 {
 
   def run(): Unit = {
+
     val logger = Logger[OAuth2.type]
     logger.debug("authenticating...")
 
@@ -56,7 +57,7 @@ object OAuth2 {
     // TODO figure out how to write these successive requests sequentially (monadically)
     val wsClient = AhcWSClient()
 
-    wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs).map { response =>
+    wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs) map { response =>
 
       val codePromise = Promise[String]()
       val codeFuture = codePromise.future
@@ -89,11 +90,10 @@ object OAuth2 {
         Console.println("in your browser and, if asked, press Allow")
       }
 
-      codeFuture.foreach { code =>
+      codeFuture foreach { code =>
 
         logger.debug("waiting for pending request to complete before shutting down HTTP server")
         Thread.sleep(200)
-
         httpServer.stop()
         logger.debug("HTTP server shut down")
 
@@ -106,7 +106,7 @@ object OAuth2 {
         )
         logger.debug(tokenArgs.toString)
 
-        wsClient.url(TokenUrl).post(tokenArgs).map { response =>
+        wsClient.url(TokenUrl).post(tokenArgs) map { response =>
           val json = Json.parse(response.body)
           logger.debug(Json.prettyPrint(json))
           val accessToken = json("access_token").as[String]
