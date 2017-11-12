@@ -1,10 +1,12 @@
+organization := "edu.luc.etl"
+
 name := "meetup-client-scala"
 
 version := "0.1"
 
 scalaVersion := "2.12.4"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
+scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-encoding", "utf8")
 
 val vPlay = "2.6.7"
 
@@ -18,5 +20,7 @@ libraryDependencies ++= Seq(
   "com.github.scopt" %% "scopt" % "3.7.0",
   "com.typesafe.play" %% "play-specs2" % vPlay % Test
 )
+
+Revolver.settings
 
 enablePlugins(JavaAppPackaging)
