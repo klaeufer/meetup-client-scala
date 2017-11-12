@@ -60,8 +60,6 @@ object OAuth2 {
     wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs) map { response =>
 
       val codePromise = Promise[String]()
-      val codeFuture = codePromise.future
-
       val config = ServerConfig(
         port = Some(RedirectServerPort),
         address = "0.0.0.0"
@@ -90,7 +88,7 @@ object OAuth2 {
         Console.println("in your browser and, if asked, press Allow")
       }
 
-      codeFuture foreach { code =>
+      codePromise.future foreach { code =>
 
         logger.debug("waiting for pending request to complete before shutting down HTTP server")
         Thread.sleep(200)

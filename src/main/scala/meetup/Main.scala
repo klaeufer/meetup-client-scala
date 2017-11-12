@@ -8,8 +8,8 @@ object Main extends App {
     isAuth: Boolean = false,
     isConsole: Boolean = false,
     isService: Boolean = false,
-    dateFrom: Calendar = null,
-    dateUntil: Calendar = null
+    dateFrom: Option[Calendar] = None,
+    dateUntil: Option[Calendar] = None
   )
 
   val parser = new scopt.OptionParser[Config](AppName) {
@@ -31,11 +31,11 @@ object Main extends App {
     } text "run as a web microservice"
 
     opt[Calendar]('f', "dateFrom") action { (x, c) =>
-      c.copy(dateFrom = x)
+      c.copy(dateFrom = Some(x))
     } text "date from which to consider events"
 
     opt[Calendar]('t', "dateTo") action { (x, c) =>
-      c.copy(dateUntil = x)
+      c.copy(dateUntil = Some(x))
     } text "date until which to consider events"
 
     checkConfig {
@@ -45,9 +45,9 @@ object Main extends App {
     }
   }
 
-  parser.parse(args, Config()).foreach {
-    case Config(true, false, false, null, null) => OAuth2.run()
-    case Config(false, _, false, f, u)          => Cli.run(Option(f), Option(u))
-    case Config(false, false, true, null, null) => WebService.run()
+  parser.parse(args, Config()) foreach {
+    case Config(true, false, false, None, None) => OAuth2.run()
+    case Config(false, _, false, f, u)          => Cli.run(f, u)
+    case Config(false, false, true, None, None) => WebService.run()
   }
 }
