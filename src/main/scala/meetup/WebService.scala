@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.scalalogging.Logger
 import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTime.{ parse => parseDateTime }
+import play.api.http.Status
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Results
 import play.api.libs.json._
@@ -35,12 +36,16 @@ object WebService extends MeetupAPIClient {
           val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
           val toDateTime = toString map parseDateTime getOrElse DateTime.now
           val interval = fromDateTime to toDateTime
-          timeAtEventsDuring(interval) map { effort =>
-            Results.Ok(Json.toJson(effort))
-          } recover {
-            case ex =>
-              Results.InternalServerError(ex.getStackTrace.mkString(Properties.lineSeparator))
-          }
+          handleClientResult(timeAtEventsDuring(interval))(
+            // Either.Right: everything OK
+            effort => Results.Ok(Json.toJson(effort)),
+            // Either.Left with status code OK
+            response => Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
+            // Either.Left with other status code
+            response => Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
+            // future timed out or failed in some other way
+            ex => Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
+          )
         }
       }
     }

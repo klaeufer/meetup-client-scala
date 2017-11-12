@@ -35,6 +35,6 @@ package object meetup {
   case class Effort(
     from: DateTime,
     to: DateTime,
-    effort: Duration
+    duration: Duration
   )
 }
