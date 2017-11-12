@@ -10,7 +10,6 @@ import play.api.http.Status
 import play.api.libs.json._
 import play.api.libs.ws.WSResponse
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.Results
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
