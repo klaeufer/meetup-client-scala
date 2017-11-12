@@ -8,4 +8,4 @@ deploy:
   app: connectorspace-meetup
   strategy: git
   on:
-    repo: LoyolaChicagoCode/meetup-client-scala
+    repo: klaeufer/meetup-client-scala
