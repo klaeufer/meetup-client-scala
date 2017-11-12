@@ -4,7 +4,6 @@ import akka.actor.ActorSystem
 import com.typesafe.scalalogging.Logger
 import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTime.{ parse => parseDateTime }
-import play.api.http.Status
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Results
 import play.api.libs.json._
@@ -36,7 +35,7 @@ object WebService extends MeetupAPIClient {
           val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
           val toDateTime = toString map parseDateTime getOrElse DateTime.now
           val interval = fromDateTime to toDateTime
-          handleClientResult(timeAtEventsDuring(interval))(
+          timeAtEventsDuring(interval)(
             // Either.Right: everything OK
             effort => Results.Ok(Json.toJson(effort)),
             // Either.Left with status code OK

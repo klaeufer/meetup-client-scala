@@ -6,7 +6,6 @@ import akka.actor.ActorSystem
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import org.joda.time.format.PeriodFormat
-import play.api.http.Status
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,7 +24,7 @@ object Cli extends MeetupAPIClient {
     val toDateTime = toDate map { cal => new DateTime(cal.getTime) } getOrElse DateTime.now
     val interval = fromDateTime to toDateTime
 
-    handleClientResult(timeAtEventsDuring(interval))(
+    timeAtEventsDuring(interval)(
       // Either.Right: everything OK
       effort => {
         val time = effort.duration.toStandardMinutes.toPeriod
