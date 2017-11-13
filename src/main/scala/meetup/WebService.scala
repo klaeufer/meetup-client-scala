@@ -36,14 +36,14 @@ object WebService extends MeetupAPIClient {
           val toDateTime = toString map parseDateTime getOrElse DateTime.now
           val interval = fromDateTime to toDateTime
           timeAtEventsDuring(interval)(
-            // Either.Right: everything OK
-            effort => Results.Ok(Json.toJson(effort)),
-            // Either.Left with status code OK
-            response => Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
-            // Either.Left with other status code
-            response => Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
-            // future timed out or failed in some other way
-            ex => Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
+            onSuccess = effort =>
+              Results.Ok(Json.toJson(effort)),
+            onParseError = response =>
+              Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
+            onOtherError = response =>
+              Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
+            onTimeout = ex =>
+              Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
           )
         }
       }

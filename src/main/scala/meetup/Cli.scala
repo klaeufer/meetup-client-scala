@@ -25,18 +25,17 @@ object Cli extends MeetupAPIClient {
     val interval = fromDateTime to toDateTime
 
     timeAtEventsDuring(interval)(
-      // Either.Right: everything OK
-      effort => {
+      onSuccess = effort => {
         val time = effort.duration.toStandardMinutes.toPeriod
         val timeString = PeriodFormat.getDefault.print(time)
         Console.println(s"spent a total of $timeString at events during $interval")
       },
-      // Either.Left with status code OK
-      response => Console.println(s"could not parse Meetup API server response as JSON: ${response.body}"),
-      // Either.Left with other status code
-      response => Console.println(s"received error from Meetup API server with status code ${response.status}"),
-      // future timed out or failed in some other way
-      ex => ex.printStackTrace()
+      onParseError = response =>
+        Console.println(s"could not parse Meetup API server response as JSON: ${response.body}"),
+      onOtherError = response =>
+        Console.println(s"received error from Meetup API server with status code ${response.status}"),
+      onTimeout = ex =>
+        ex.printStackTrace()
     ) foreach { _ =>
         // unconditionally shut everything down
         wsClient.close()
