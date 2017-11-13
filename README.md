@@ -15,7 +15,7 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
 *Currently in the exploration stage.*
 
-# Objectives
+# Functional requirements
 
 - query a user's (past) events based on certain criteria
   - within a given date/time interval
@@ -27,6 +27,19 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
   - time spent at events per group
   - etc.
 
+# Nonfunctional requirements
+
+- static quality attributes: testability, maintainability, etc.
+- dynamic quality attributes: performance, scalability, reliability, etc.
+- frictionless solution stack based on best practices and community support
+
+# Learning objectives
+
+- provide exemplars of API client connectors suitable for learning
+- include basic, easy-to-understand blocking implementations as starting points
+- include advanced nonblocking/async implementations as next steps
+- maintain a polyglot mindset by focusing on patterns
+
 # Example output
 
 ```
@@ -35,11 +48,15 @@ found 5 events last year
 spent a total of 7.25 hours at events last year
 ```
 
-# Dependencies
+# Dependencies/solution stack
 
-- play-ahc-ws (standalone)
-- play-json (standalone)
-- nscala-time (Scala wrapper for joda-time)
+- Play framework (Scala) including
+  - play-ahc-ws (HTTP client)
+  - play-akka-http-server
+  - play-json
+- nscala-time: Scala wrapper for joda-time
+- scopt: command-line options)
+- specs2: testing including JSON matchers
 
 # References
 
