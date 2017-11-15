@@ -47,7 +47,7 @@ object Main extends App {
 
   parser.parse(args, Config()) foreach {
     case Config(true, false, false, None, None) => OAuth2.run()
-    case Config(false, _, false, f, u)          => Cli.run(f, u)
-    case Config(false, false, true, None, None) => WebService.run()
+    case Config(false, true, false, f, u)       => Cli.run(f, u)
+    case Config(false, false, _, None, None)    => WebService.run()
   }
 }
