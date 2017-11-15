@@ -104,10 +104,12 @@ object OAuth2 {
         logger.debug(tokenArgs.toString)
 
         wsClient.url(TokenUrl).post(tokenArgs) map { response =>
+
           val json = Json.parse(response.body)
           logger.debug(Json.prettyPrint(json))
           val accessToken = json("access_token").as[String]
           val refreshToken = json("refresh_token").as[String]
+
           logger.debug(s"storing access and refresh tokens = $accessToken $refreshToken")
           props.setProperty(KeyAccessToken, accessToken)
           props.setProperty(KeyRefreshToken, refreshToken)
