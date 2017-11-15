@@ -2,8 +2,7 @@ package edu.luc.etl.connectorspace.meetup
 
 import java.awt.Desktop
 import java.io.{ File, PrintWriter }
-import java.net.{ URI, URLDecoder }
-import java.nio.charset.StandardCharsets
+import java.net.URI
 import java.util.Properties
 
 import akka.actor.ActorSystem
@@ -57,6 +56,7 @@ object OAuth2 {
     // TODO figure out how to write these successive requests sequentially (monadically)
     val wsClient = AhcWSClient()
 
+    // do not follow redirects so we can open the target URI in the browser
     wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs) map { response =>
 
       val codePromise = Promise[String]()
@@ -76,10 +76,9 @@ object OAuth2 {
       }
       logger.debug(s"HTTP server now running at ${config.address}")
 
-      val locationHeader = response.headers("Location")(0)
-      val locationQSMap = locationHeader.split("&").map { kv => val arr = kv.split("=", 2); arr(0) -> arr(1) }.toMap
-      val returnUri = URLDecoder.decode(locationQSMap("returnUri"), StandardCharsets.UTF_8.name)
-
+      // open the target URI in the browser
+      // this should result in a request to the embedded server
+      val returnUri = response.headers("Location")(0)
       if (Desktop.isDesktopSupported) {
         logger.debug(s"opening $returnUri with default system handler")
         Desktop.getDesktop.browse(new URI(returnUri))
