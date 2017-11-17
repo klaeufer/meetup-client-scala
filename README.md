@@ -15,6 +15,29 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
 *Currently in the exploration stage.*
 
+# How to run
+
+1. Visit https://secure.meetup.com/meetup_api/oauth_consumers/ to create a Meetup OAuth2 consumer with redirect URI http://localhost:8080.
+1. Then create a `local.properties` in the project root containing your OAuth consumer credentials:
+
+        clientId=<key>
+        clientSecret=<secret>
+1. Then obtain an OAuth2 access token by running
+
+        ./target/universal/stage/bin/meetup-client-scala -a
+   This should redirect you to your web browser so you can authenticate through Meetup.
+1. Now you can run the actual client. E.g.
+
+        sbt stage
+        ./target/universal/stage/bin/meetup-client-scala -c -f 2015-01-01
+    will compute how much time you spent at meetups since the given date.
+
+# Example output
+
+    found 68 events total
+    found  5 events last year
+    spent a total of 7.25 hours at events last year
+
 # Functional requirements
 
 - query a user's (past) events based on certain criteria
@@ -39,14 +62,6 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 - include basic, easy-to-understand blocking implementations as starting points
 - include advanced nonblocking/async implementations as next steps
 - maintain a polyglot mindset by focusing on patterns
-
-# Example output
-
-```
-found 68 events total
-found 5 events last year
-spent a total of 7.25 hours at events last year
-```
 
 # Dependencies/solution stack
 
