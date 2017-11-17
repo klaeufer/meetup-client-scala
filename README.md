@@ -18,7 +18,7 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 # How to run
 
 1. Visit https://secure.meetup.com/meetup_api/oauth_consumers/ to create a Meetup OAuth2 consumer with redirect URI http://localhost:8080.
-1. Then create a `local.properties` in the project root containing your OAuth consumer credentials:
+1. Then create a `local.properties` file in the project root containing your OAuth consumer credentials (without quotes):
 
         clientId=<key>
         clientSecret=<secret>
