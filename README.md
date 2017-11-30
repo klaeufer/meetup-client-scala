@@ -22,13 +22,15 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
         clientId=<key>
         clientSecret=<secret>
+1. Now compile the code and create the scripts.
+
+        sbt stage
 1. Then obtain an OAuth2 access token by running
 
         ./target/universal/stage/bin/meetup-client-scala -a
    This should redirect you to your web browser so you can authenticate through Meetup.
 1. Now you can run the actual client. E.g.
 
-        sbt stage
         ./target/universal/stage/bin/meetup-client-scala -c -f 2015-01-01
     will compute how much time you spent at meetups since the given date.
 
