@@ -17,6 +17,7 @@ target/
 tmp/
 
 # Local configuration file (sdk path, etc)
+.env*
 local.properties
 .cache/
 .classpath
