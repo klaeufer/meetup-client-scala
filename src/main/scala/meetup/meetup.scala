@@ -8,8 +8,8 @@ package object meetup {
   val AppVersion = "0.1"
 
   val PropFileName = "local.properties"
-  val KeyClientId = "clientId"
-  val KeyClientSecret = "clientSecret"
+  val KeyClientId = "MEETUP_CLIENT_ID"
+  val KeyClientSecret = "MEETUP_CLIENT_SECRET"
   val KeyAccessToken = "accessToken"
   val KeyRefreshToken = "refreshToken"
 

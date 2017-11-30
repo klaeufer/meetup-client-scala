@@ -1,7 +1,7 @@
 package edu.luc.etl.connectorspace.meetup
 
 import java.awt.Desktop
-import java.io.{ File, PrintWriter }
+import java.io.{ File, FileNotFoundException, PrintWriter }
 import java.net.URI
 import java.util.Properties
 
@@ -25,18 +25,23 @@ object OAuth2 {
     logger.debug("authenticating...")
 
     val props = new Properties
-    val reader = Source.fromFile(PropFileName).reader
-    props.load(reader)
 
-    if (props.getProperty(KeyAccessToken) != null) {
-      Console.print("found existing OAuth2 access token - force update? [yN]")
-      if (StdIn.readLine().trim.toLowerCase != "y") {
-        sys.exit(2)
+    try {
+      logger.debug("looking for existing OAuth2 access token")
+      val reader = Source.fromFile(PropFileName).reader
+      props.load(reader)
+      if (props.getProperty(KeyAccessToken) != null) {
+        Console.print("found existing OAuth2 access token - force update? [yN]")
+        if (StdIn.readLine().trim.toLowerCase != "y") {
+          sys.exit(2)
+        }
       }
+    } catch {
+      case ex: FileNotFoundException => logger.debug(s"properties file $PropFileName not found, proceeding", ex)
     }
 
-    val clientId = props.getProperty(KeyClientId)
-    val clientSecret = props.getProperty(KeyClientSecret)
+    val clientId = sys.env(KeyClientId)
+    val clientSecret = sys.env(KeyClientSecret)
 
     logger.debug(s"$KeyClientId = $clientId")
     logger.debug(s"$KeyClientSecret = $clientSecret")
@@ -44,7 +49,6 @@ object OAuth2 {
     implicit val system = ActorSystem()
     implicit val mat = ActorMaterializer()
     import play.api.libs.ws.DefaultBodyWritables._
-
     import scala.concurrent.ExecutionContext.Implicits.global
 
     val authArgs = Map(
