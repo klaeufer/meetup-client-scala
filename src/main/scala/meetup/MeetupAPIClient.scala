@@ -1,7 +1,5 @@
 package edu.luc.etl.connectorspace.meetup
 
-import java.util.Properties
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.github.nscala_time.time.Imports._
@@ -13,7 +11,6 @@ import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
 import scala.util.Try
 
 trait MeetupAPIClient {
@@ -38,20 +35,13 @@ trait MeetupAPIClient {
     )
   }
 
-  def timeAtEventsDuring[R](interval: Interval)(
+  def timeAtEventsDuring[R](interval: Interval)(authHeader: (String, String))(
     onSuccess: Effort => R,
     onParseError: WSResponse => R,
     onOtherError: WSResponse => R,
     onTimeout: Throwable => R
-  ) = {
-    logger.debug("retrieving access token")
+  ): Future[R] = {
 
-    val props = new Properties
-    val reader = Source.fromFile(PropFileName).reader
-    props.load(reader)
-
-    val accessToken = props.getProperty(KeyAccessToken)
-    val authHeader = "Authorization" -> s"Bearer $accessToken"
     val serviceUrl = "https://api.meetup.com/self/events?desc=true"
 
     logger.debug(s"submitting request to $serviceUrl")

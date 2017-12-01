@@ -61,7 +61,7 @@ object OAuth2 {
     val wsClient = AhcWSClient()
 
     // do not follow redirects so we can open the target URI in the browser
-    wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs) map { response =>
+    wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs) foreach { response =>
 
       val codePromise = Promise[String]()
       val config = ServerConfig(
@@ -107,7 +107,7 @@ object OAuth2 {
         )
         logger.debug(tokenArgs.toString)
 
-        wsClient.url(TokenUrl).post(tokenArgs) map { response =>
+        wsClient.url(TokenUrl).post(tokenArgs) foreach { response =>
 
           val json = Json.parse(response.body)
           logger.debug(Json.prettyPrint(json))

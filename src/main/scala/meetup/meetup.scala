@@ -12,6 +12,7 @@ package object meetup {
   val KeyClientSecret = "MEETUP_CLIENT_SECRET"
   val KeyAccessToken = "accessToken"
   val KeyRefreshToken = "refreshToken"
+  val KeyAuthorization = "Authorization"
 
   val AuthUrl = "https://secure.meetup.com/oauth2/authorize"
   val TokenUrl = "https://secure.meetup.com/oauth2/access"

@@ -1,6 +1,6 @@
 package edu.luc.etl.connectorspace.meetup
 
-import java.util.Calendar
+import java.util.{ Calendar, Properties }
 
 import akka.actor.ActorSystem
 import com.github.nscala_time.time.Imports._
@@ -9,6 +9,8 @@ import org.joda.time.format.PeriodFormat
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.io.Source
+import scala.util.Try
 
 object Cli extends MeetupAPIClient {
 
@@ -24,7 +26,15 @@ object Cli extends MeetupAPIClient {
     val toDateTime = toDate map { cal => new DateTime(cal.getTime) } getOrElse DateTime.now
     val interval = fromDateTime to toDateTime
 
-    timeAtEventsDuring(interval)(
+    logger.debug("retrieving access token")
+    val props = new Properties
+    val reader = Source.fromFile(PropFileName).reader
+    props.load(reader)
+    val accessToken = props.getProperty(KeyAccessToken)
+    require { accessToken != null }
+    val authHeader = KeyAuthorization -> s"Bearer $accessToken"
+
+    timeAtEventsDuring(interval)(authHeader)(
       onSuccess = effort => {
         val time = effort.duration.toStandardMinutes.toPeriod
         val timeString = PeriodFormat.getDefault.print(time)
@@ -33,7 +43,7 @@ object Cli extends MeetupAPIClient {
       onParseError = response =>
         Console.println(s"could not parse Meetup API server response as JSON: ${response.body}"),
       onOtherError = response =>
-        Console.println(s"received error from Meetup API server with status code ${response.status}"),
+        Console.println(s"received error from Meetup API server with status code ${response.status} and body ${response.body}"),
       onTimeout = ex =>
         ex.printStackTrace()
     ) foreach { _ =>
