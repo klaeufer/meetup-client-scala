@@ -66,7 +66,7 @@ object OAuth2 {
       val codePromise = Promise[String]()
       val config = ServerConfig(
         port = Some(RedirectServerPort),
-        address = "0.0.0.0"
+        address = RedirectServerAddress
       )
       logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
       val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>

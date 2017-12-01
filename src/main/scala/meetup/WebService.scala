@@ -25,7 +25,7 @@ object WebService extends MeetupAPIClient {
 
     val config = ServerConfig(
       port = Some(WebServerPort),
-      address = "0.0.0.0"
+      address = WebServerAddress
     )
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
     AkkaHttpServer.fromRouterWithComponents(config) { components =>

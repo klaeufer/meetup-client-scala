@@ -42,11 +42,9 @@ trait MeetupAPIClient {
     onTimeout: Throwable => R
   ): Future[R] = {
 
-    val serviceUrl = "https://api.meetup.com/self/events?desc=true"
+    logger.debug(s"submitting request to $ServiceUrl")
 
-    logger.debug(s"submitting request to $serviceUrl")
-
-    wsClient.url(serviceUrl).addHttpHeaders(authHeader).get() map { response =>
+    wsClient.url(ServiceUrl).addHttpHeaders(authHeader).get() map { response =>
       response.status match {
 
         case Status.OK => Try {
