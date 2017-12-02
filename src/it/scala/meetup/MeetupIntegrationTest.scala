@@ -4,13 +4,13 @@ import akka.actor.ActorSystem
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import org.joda.time.DateTime.{ parse => parseDateTime }
-import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable._
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class MeetupSpec extends Specification with MeetupAPIClient {
+class MeetupIntegrationTest extends Specification with MeetupAPIClient {
 
   override val logger = Logger[WebService.type]
 
