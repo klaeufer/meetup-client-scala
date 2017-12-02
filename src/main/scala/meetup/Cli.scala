@@ -29,11 +29,10 @@ object Cli extends MeetupAPIClient {
     val props = new Properties
     val reader = Source.fromFile(PropFileName).reader
     props.load(reader)
-    val accessToken = props.getProperty(KeyAccessToken)
-    require { accessToken != null }
+    val accessToken = Option(props.getProperty(KeyAccessToken)).get
     val authHeader = KeyAuthorization -> s"Bearer $accessToken"
 
-    timeAtEventsDuring(interval)(_.url(ServiceUrl).addHttpHeaders(authHeader))(
+    timeAtEventsDuring(interval)(_.addHttpHeaders(authHeader))(
       onSuccess = effort => {
         val time = effort.duration.toStandardMinutes.toPeriod
         val timeString = PeriodFormat.getDefault.print(time)

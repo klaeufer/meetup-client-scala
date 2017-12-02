@@ -9,11 +9,13 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import com.typesafe.scalalogging.Logger
 import play.api.libs.json.Json
+import play.api.libs.ws.DefaultBodyWritables._
 import play.api.libs.ws.ahc.AhcWSClient
 import play.api.mvc.Results
 import play.api.routing.sird._
 import play.core.server.{ AkkaHttpServer, ServerConfig }
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 import scala.io.{ Source, StdIn }
 
@@ -30,7 +32,7 @@ object OAuth2 {
       logger.debug("looking for existing OAuth2 access token")
       val reader = Source.fromFile(PropFileName).reader
       props.load(reader)
-      if (props.getProperty(KeyAccessToken) != null) {
+      if (Option(props.getProperty(KeyAccessToken)).isDefined) {
         Console.print("found existing OAuth2 access token - force update? [yN]")
         if (StdIn.readLine().trim.toLowerCase != "y") {
           sys.exit(2)
@@ -40,16 +42,14 @@ object OAuth2 {
       case ex: FileNotFoundException => logger.debug(s"properties file $PropFileName not found, proceeding", ex)
     }
 
-    val clientId = sys.env(KeyClientId)
-    val clientSecret = sys.env(KeyClientSecret)
+    val clientId = sys.env.get(KeyClientId).get
+    val clientSecret = sys.env.get(KeyClientSecret).get
 
     logger.debug(s"$KeyClientId = $clientId")
     logger.debug(s"$KeyClientSecret = $clientSecret")
 
     implicit val system = ActorSystem()
     implicit val mat = ActorMaterializer()
-    import play.api.libs.ws.DefaultBodyWritables._
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val authArgs = Map(
       "client_id" -> clientId,

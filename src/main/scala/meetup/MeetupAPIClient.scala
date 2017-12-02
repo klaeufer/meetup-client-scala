@@ -6,7 +6,7 @@ import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import play.api.http.Status
 import play.api.libs.json._
-import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
+import play.api.libs.ws.{ WSRequest, WSResponse }
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Future
@@ -35,13 +35,13 @@ trait MeetupAPIClient {
     )
   }
 
-  def apiCaller[R](requestCreator: WSClient => WSRequest)(
+  def apiCaller[R](authorizeRequest: WSRequest => WSRequest)(
     onSuccess: WSResponse => R,
     onParseError: WSResponse => R,
     onOtherError: WSResponse => R,
     onTimeout: Throwable => R
   ): Future[R] = {
-    val request = requestCreator(wsClient)
+    val request = authorizeRequest(wsClient.url(ServiceUrl))
     logger.debug(s"submitting request to ${request.url}")
     request.get() map { response =>
       response.status match {
@@ -53,13 +53,13 @@ trait MeetupAPIClient {
     }
   }
 
-  def timeAtEventsDuring[R](interval: Interval)(requestCreator: WSClient => WSRequest)(
+  def timeAtEventsDuring[R](interval: Interval)(authorizeRequest: WSRequest => WSRequest)(
     onSuccess: Effort => R,
     onParseError: WSResponse => R,
     onOtherError: WSResponse => R,
     onTimeout: Throwable => R
   ): Future[R] =
-    apiCaller(requestCreator)(response => {
+    apiCaller(authorizeRequest)(response => {
       val responseLength = response.body.length
       logger.debug(s"response length = $responseLength")
       val json = Json.parse(response.body)

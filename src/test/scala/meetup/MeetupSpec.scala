@@ -4,10 +4,9 @@ import akka.actor.ActorSystem
 import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import org.joda.time.DateTime.{ parse => parseDateTime }
-import org.specs2.mutable._
-import play.api.libs.ws.WSClient
-import play.api.libs.ws.ahc.AhcWSClient
 import org.specs2.concurrent.ExecutionEnv
+import org.specs2.mutable._
+import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Await
 
@@ -19,25 +18,22 @@ class MeetupSpec extends Specification with MeetupAPIClient {
 
   override def wsClient = AhcWSClient()
 
-  val apiKey = sys.env(KeyApiKey)
-  require { apiKey != null }
+  val apiKey = Option(sys.env(KeyApiKey)).get
 
   "The timeAtEventsDuring method" should {
-    "return 765 minutes" in {
+    "return 765 minutes of effort" in {
 
       val fromTime = parseDateTime("2015-01-01")
       val toTime = parseDateTime("2017-12-01")
-      val result = Effort(fromTime, toTime, 765.minutes)
       val interval = fromTime to toTime
-      def requestCreator(wsClient: WSClient) = wsClient.url(ServiceUrl).addQueryStringParameters("key" -> apiKey)
-      val future = timeAtEventsDuring(interval)(requestCreator)(
-        onSuccess = identity,
-        onParseError = r => { println(s"parse error: $r"); null },
-        onOtherError = r => { println(s"other error: $r"); null },
-        onTimeout = ex => { println(s"timeout: $ex"); null }
+      val result = Effort(fromTime, toTime, 765.minutes)
+      val future = timeAtEventsDuring(interval)(_.addQueryStringParameters("key" -> apiKey))(
+        onSuccess = Some.apply,
+        onParseError = r => { println(s"parse error: $r"); None },
+        onOtherError = r => { println(s"other error: $r"); None },
+        onTimeout = ex => { println(s"timeout: $ex"); None }
       )
-      import scala.concurrent.duration.Duration
-      Await.result(future, Duration.Inf) must beEqualTo(result)
+      Await.result(future, 5.seconds.toDuration.toScalaDuration) must beEqualTo(Some(result))
     }
   }
 }

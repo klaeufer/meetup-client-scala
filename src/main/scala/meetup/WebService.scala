@@ -38,7 +38,7 @@ object WebService extends MeetupAPIClient {
           val toDateTime = untilString map parseDateTime getOrElse DateTime.now
           val interval = fromDateTime to toDateTime
 
-          timeAtEventsDuring(interval)(_.url(ServiceUrl).addHttpHeaders(authHeader))(
+          timeAtEventsDuring(interval)(_.addHttpHeaders(authHeader))(
             onSuccess = effort =>
               Results.Ok(Json.toJson(effort)),
             onParseError = response =>
