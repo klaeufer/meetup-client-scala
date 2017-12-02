@@ -6,7 +6,7 @@ import com.github.nscala_time.time.Imports._
 import com.typesafe.scalalogging.Logger
 import play.api.http.Status
 import play.api.libs.json._
-import play.api.libs.ws.WSResponse
+import play.api.libs.ws.{ WSClient, WSRequest, WSResponse }
 import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.Future
@@ -35,40 +35,50 @@ trait MeetupAPIClient {
     )
   }
 
-  def timeAtEventsDuring[R](interval: Interval)(authHeader: (String, String))(
-    onSuccess: Effort => R,
+  def apiCaller[R](requestCreator: WSClient => WSRequest)(
+    onSuccess: WSResponse => R,
     onParseError: WSResponse => R,
     onOtherError: WSResponse => R,
     onTimeout: Throwable => R
   ): Future[R] = {
-
-    logger.debug(s"submitting request to $ServiceUrl")
-
-    wsClient.url(ServiceUrl).addHttpHeaders(authHeader).get() map { response =>
+    val request = requestCreator(wsClient)
+    logger.debug(s"submitting request to ${request.url}")
+    request.get() map { response =>
       response.status match {
-
-        case Status.OK => Try {
-          val responseLength = response.body.length
-          logger.debug(s"response length = $responseLength")
-          val json = Json.parse(response.body)
-
-          // TODO figure out why we need to map explicitly
-          // val events = Json.fromJson[IndexedSeq[Event]](json)
-          val events = json.as[JsArray].value flatMap { _.validate[Event].asOpt }
-          logger.debug(s"found ${events.length} events total")
-
-          val eventsDuringInterval = events filter { event => interval.contains(event.time) }
-          logger.debug(s"found ${eventsDuringInterval.length} events last during $interval")
-          logger.debug(eventsDuringInterval.toString)
-
-          val durationMillis = eventsDuringInterval.map { _.duration }.sum
-          onSuccess(Effort(interval.start, interval.end, Duration.millis(durationMillis)))
-        } getOrElse onParseError(response)
-
-        case _ => onOtherError(response)
+        case Status.OK => Try { onSuccess(response) } getOrElse onParseError(response)
+        case _         => onOtherError(response)
       }
     } recover {
       PartialFunction(onTimeout)
     }
   }
+
+  def timeAtEventsDuring[R](interval: Interval)(requestCreator: WSClient => WSRequest)(
+    onSuccess: Effort => R,
+    onParseError: WSResponse => R,
+    onOtherError: WSResponse => R,
+    onTimeout: Throwable => R
+  ): Future[R] =
+    apiCaller(requestCreator)(response => {
+      val responseLength = response.body.length
+      logger.debug(s"response length = $responseLength")
+      val json = Json.parse(response.body)
+
+      // TODO figure out why we need to map explicitly
+      // val events = Json.fromJson[IndexedSeq[Event]](json)
+      val events = json.as[JsArray].value flatMap {
+        _.validate[Event].asOpt
+      }
+      logger.debug(s"found ${events.length} events total")
+
+      val eventsDuringInterval = events filter { event => interval.contains(event.time) }
+      logger.debug(s"found ${eventsDuringInterval.length} events last during $interval")
+      logger.debug(eventsDuringInterval.toString)
+
+      val durationMillis = eventsDuringInterval.map {
+        _.duration
+      }.sum
+      onSuccess(Effort(interval.start, interval.end, Duration.millis(durationMillis)))
+    }, onParseError, onOtherError, onTimeout)
+
 }

@@ -10,7 +10,6 @@ import play.api.libs.ws.ahc.AhcWSClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
-import scala.util.Try
 
 object Cli extends MeetupAPIClient {
 
@@ -34,7 +33,7 @@ object Cli extends MeetupAPIClient {
     require { accessToken != null }
     val authHeader = KeyAuthorization -> s"Bearer $accessToken"
 
-    timeAtEventsDuring(interval)(authHeader)(
+    timeAtEventsDuring(interval)(_.url(ServiceUrl).addHttpHeaders(authHeader))(
       onSuccess = effort => {
         val time = effort.duration.toStandardMinutes.toPeriod
         val timeString = PeriodFormat.getDefault.print(time)

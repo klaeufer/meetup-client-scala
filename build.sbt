@@ -18,7 +18,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.github.nscala-time" %% "nscala-time" % "2.16.0",
   "com.github.scopt" %% "scopt" % "3.7.0",
-  "com.typesafe.play" %% "play-specs2" % vPlay % Test
+  "com.typesafe.play" %% "play-specs2" % vPlay % Test,
+  "org.specs2" %% "specs2-matcher-extra" % "4.0.2" % Test
 )
 
 Revolver.settings

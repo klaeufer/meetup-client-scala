@@ -30,15 +30,16 @@ object WebService extends MeetupAPIClient {
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
     AkkaHttpServer.fromRouterWithComponents(config) { components =>
       {
-        case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$toString") => components.defaultActionBuilder async { request =>
+        case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$untilString") => components.defaultActionBuilder.async { request =>
 
           val authHeader = KeyAuthorization -> request.headers.get(KeyAuthorization).get
           logger.debug(s"using header $authHeader")
           logger.debug(s"retrieving events from $fromString to $toString")
           val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
-          val toDateTime = toString map parseDateTime getOrElse DateTime.now
+          val toDateTime = untilString map parseDateTime getOrElse DateTime.now
           val interval = fromDateTime to toDateTime
-          timeAtEventsDuring(interval)(authHeader)(
+
+          timeAtEventsDuring(interval)(_.url(ServiceUrl).addHttpHeaders(authHeader))(
             onSuccess = effort =>
               Results.Ok(Json.toJson(effort)),
             onParseError = response =>

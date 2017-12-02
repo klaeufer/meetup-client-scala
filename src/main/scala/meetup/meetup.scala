@@ -10,6 +10,7 @@ package object meetup {
   val PropFileName = "local.properties"
   val KeyClientId = "MEETUP_CLIENT_ID"
   val KeyClientSecret = "MEETUP_CLIENT_SECRET"
+  val KeyApiKey = "MEETUP_API_KEY"
   val KeyAccessToken = "accessToken"
   val KeyRefreshToken = "refreshToken"
   val KeyAuthorization = "Authorization"
