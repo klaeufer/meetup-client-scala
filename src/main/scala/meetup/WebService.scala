@@ -10,7 +10,6 @@ import play.api.libs.json._
 import play.api.routing.sird._
 import play.core.server.{ AkkaHttpServer, ServerConfig }
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Properties
 
 object WebService extends MeetupAPIClient {
