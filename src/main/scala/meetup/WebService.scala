@@ -22,8 +22,10 @@ object WebService extends MeetupAPIClient {
 
   def run(): Unit = {
 
+    val port = Properties.envOrElse("PORT", WebServerPort).toInt
+
     val config = ServerConfig(
-      port = Some(WebServerPort),
+      port = Some(port),
       address = WebServerAddress
     )
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
