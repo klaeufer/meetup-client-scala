@@ -34,10 +34,18 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
         ./target/universal/stage/bin/meetup-client-scala -a
    This should redirect you to your web browser so you can authenticate through Meetup.
-1. Now you can run the actual client. E.g.
+1. Now you can run the actual command-line connector. E.g.
 
         ./target/universal/stage/bin/meetup-client-scala -c -f 2015-01-01
     will compute how much time you spent at meetups since the given date.
+
+1. You can also run the connector as a web service
+
+        ./target/universal/stage/bin/meetup-client-scala -s
+    and connect to it through a user agent
+
+        curl -H "Authorization: Bearer <OAuth2 access token>" localhost:8080/effort?from=2015-01-01
+        {"from":1420092000000,"to":1512248480088,"effort":45900000}
 
 # Example output
 
