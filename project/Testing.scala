@@ -17,5 +17,3 @@ object Testing {
 
   lazy val AllScopes = Seq(Test, IntegrationTest, EndToEndTest).mkString(",")
 }
-
-
