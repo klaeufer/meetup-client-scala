@@ -40,6 +40,7 @@ object WebService extends MeetupAPIClient {
         case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$untilString" & q_?"key=$optApiKey") =>
           components.defaultActionBuilder.async { request =>
 
+            // TODO this looks like a reusable, request-independent key or token authorization technique
             val optAuthValue = request.headers.get(KeyAuthorization)
             val authorizeRequest: WSRequest => WSRequest = (optApiKey, optAuthValue) match {
               case (_, Some(authValue)) =>
