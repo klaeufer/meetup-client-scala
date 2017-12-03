@@ -21,7 +21,7 @@ package object meetup {
   val RedirectServerPort = 8080
   val RedirectServerAddress = "0.0.0.0"
   val RedirectUrl = s"http://localhost:$RedirectServerPort"
-  val WebServerPort = "8080"
+  val DefaultWebServerPort = "8080"
   val WebServerAddress = "0.0.0.0"
 
   case class Event(
