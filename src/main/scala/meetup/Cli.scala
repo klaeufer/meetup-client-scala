@@ -8,6 +8,7 @@ import com.typesafe.scalalogging.Logger
 import org.joda.time.format.PeriodFormat
 import play.api.libs.ws.ahc.AhcWSClient
 
+import scala.collection.JavaConverters.propertiesAsScalaMapConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
 
@@ -29,7 +30,7 @@ object Cli extends MeetupAPIClient {
     val props = new Properties
     val reader = Source.fromFile(PropFileName).reader
     props.load(reader)
-    val accessToken = Option(props.getProperty(KeyAccessToken)).get
+    val accessToken = props.asScala(KeyAccessToken)
     val authHeader = KeyAuthorization -> s"Bearer $accessToken"
 
     timeAtEventsDuring(interval)(_.addHttpHeaders(authHeader))(

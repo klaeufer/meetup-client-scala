@@ -15,6 +15,7 @@ import play.api.mvc.Results
 import play.api.routing.sird._
 import play.core.server.{ AkkaHttpServer, ServerConfig }
 
+import scala.collection.JavaConverters.propertiesAsScalaMapConverter
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 import scala.io.{ Source, StdIn }
@@ -30,7 +31,7 @@ object OAuth2 {
     logger.debug("looking for existing OAuth2 access token")
     val reader = Source.fromFile(PropFileName).reader
     props.load(reader)
-    if (Option(props.getProperty(KeyAccessToken)).isDefined) {
+    if (props.asScala.get(KeyAccessToken).isDefined) {
       Console.print("found existing OAuth2 access token - force update? [yN]")
       if (StdIn.readLine().trim.toLowerCase != "y") {
         sys.exit(2)
