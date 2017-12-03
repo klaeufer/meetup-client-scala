@@ -18,7 +18,7 @@ class MeetupIntegrationTest extends Specification with MeetupAPIClient {
 
   override def wsClient = AhcWSClient()
 
-  val apiKey = Option(sys.env(KeyApiKey)).get
+  val apiKey = sys.env(KeyApiKey)
 
   "The timeAtEventsDuring method" should {
     "return 765 minutes of effort" in {
