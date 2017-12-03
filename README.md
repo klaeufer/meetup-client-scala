@@ -50,7 +50,7 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 # Example output
 
     found 68 events total
-    found  5 events last year
+    found 5 events last year
     spent a total of 7.25 hours at events last year
 
 # Functional requirements

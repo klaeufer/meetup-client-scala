@@ -70,7 +70,7 @@ trait MeetupAPIClient {
       logger.debug(s"found ${events.length} events total")
 
       val eventsDuringInterval = events filter { event => interval.contains(event.time) }
-      logger.debug(s"found ${eventsDuringInterval.length} events last during $interval")
+      logger.debug(s"found ${eventsDuringInterval.length} events during $interval")
       logger.debug(eventsDuringInterval.toString)
 
       val durationMillis = eventsDuringInterval.map { _.duration }.sum

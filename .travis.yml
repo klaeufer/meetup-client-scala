@@ -1,7 +1,7 @@
 sudo: false
 language: scala
 scala: 2.12.4
-script: sbt coverage test coverageReport
+script: sbt coverage test:test it:test coverageReport
 after_success: bash <(curl -s https://codecov.io/bash)
 deploy:
   provider: heroku
