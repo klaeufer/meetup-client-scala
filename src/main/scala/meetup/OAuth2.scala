@@ -31,7 +31,7 @@ object OAuth2 {
     logger.debug("looking for existing OAuth2 access token")
     val reader = Source.fromFile(PropFileName).reader
     props.load(reader)
-    if (props.asScala.get(KeyAccessToken).isDefined) {
+    if (props.asScala.contains(KeyAccessToken)) {
       Console.print("found existing OAuth2 access token - force update? [yN]")
       if (StdIn.readLine().trim.toLowerCase != "y") {
         sys.exit(2)

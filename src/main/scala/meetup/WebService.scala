@@ -34,7 +34,7 @@ object WebService extends MeetupAPIClient {
         case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$untilString") =>
           components.defaultActionBuilder.async { request =>
 
-            val authHeader = KeyAuthorization -> request.headers.get(KeyAuthorization).get
+            val authHeader = KeyAuthorization -> request.headers.toSimpleMap(KeyAuthorization)
             logger.debug(s"using header $authHeader")
             logger.debug(s"retrieving events from $fromString to $toString")
             val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
