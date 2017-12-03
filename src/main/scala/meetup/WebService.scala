@@ -31,26 +31,27 @@ object WebService extends MeetupAPIClient {
     logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
     AkkaHttpServer.fromRouterWithComponents(config) { components =>
       {
-        case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$untilString") => components.defaultActionBuilder.async { request =>
+        case GET(p"/effort" ? q_?"from=$fromString" & q_?"to=$untilString") =>
+          components.defaultActionBuilder.async { request =>
 
-          val authHeader = KeyAuthorization -> request.headers.get(KeyAuthorization).get
-          logger.debug(s"using header $authHeader")
-          logger.debug(s"retrieving events from $fromString to $toString")
-          val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
-          val toDateTime = untilString map parseDateTime getOrElse DateTime.now
-          val interval = fromDateTime to toDateTime
+            val authHeader = KeyAuthorization -> request.headers.get(KeyAuthorization).get
+            logger.debug(s"using header $authHeader")
+            logger.debug(s"retrieving events from $fromString to $toString")
+            val fromDateTime = fromString map parseDateTime getOrElse DateTime.lastMonth
+            val toDateTime = untilString map parseDateTime getOrElse DateTime.now
+            val interval = fromDateTime to toDateTime
 
-          timeAtEventsDuring(interval)(_.addHttpHeaders(authHeader))(
-            onSuccess = effort =>
-              Results.Ok(Json.toJson(effort)),
-            onParseError = response =>
-              Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
-            onOtherError = response =>
-              Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
-            onTimeout = ex =>
-              Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
-          )
-        }
+            timeAtEventsDuring(interval)(_.addHttpHeaders(authHeader))(
+              onSuccess = effort =>
+                Results.Ok(Json.toJson(effort)),
+              onParseError = response =>
+                Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
+              onOtherError = response =>
+                Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
+              onTimeout = ex =>
+                Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
+            )
+          }
       }
     }
     logger.debug(s"HTTP server now running at ${config.address}")

@@ -66,18 +66,14 @@ trait MeetupAPIClient {
 
       // TODO figure out why we need to map explicitly
       // val events = Json.fromJson[IndexedSeq[Event]](json)
-      val events = json.as[JsArray].value flatMap {
-        _.validate[Event].asOpt
-      }
+      val events = json.as[JsArray].value flatMap { _.validate[Event].asOpt }
       logger.debug(s"found ${events.length} events total")
 
       val eventsDuringInterval = events filter { event => interval.contains(event.time) }
       logger.debug(s"found ${eventsDuringInterval.length} events last during $interval")
       logger.debug(eventsDuringInterval.toString)
 
-      val durationMillis = eventsDuringInterval.map {
-        _.duration
-      }.sum
+      val durationMillis = eventsDuringInterval.map { _.duration }.sum
       onSuccess(Effort(interval.start, interval.end, Duration.millis(durationMillis)))
     }, onParseError, onOtherError, onTimeout)
 
