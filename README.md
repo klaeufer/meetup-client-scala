@@ -34,10 +34,11 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
         ./target/universal/stage/bin/meetup-client-scala -a
    This should redirect you to your web browser so you can authenticate through Meetup.
-1. Now you can run the actual command-line connector. E.g.
+1. Now you can run the actual command-line connector.
+E.g., you can find out how much time you spent at meetups since a given date.
 
         ./target/universal/stage/bin/meetup-client-scala -c -f 2015-01-01
-    will compute how much time you spent at meetups since the given date.
+        spent a total of 765 minutes at events during 2015-01-01T00:00:00.000-06:00/2017-12-04T15:55:23.185-06:00
 
 1. You can also run the connector as a web service
 
@@ -46,12 +47,6 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
         curl -H "Authorization: Bearer <OAuth2 access token>" localhost:8080/effort?from=2015-01-01
         {"from":1420092000000,"to":1512248480088,"effort":45900000}
-
-# Example output
-
-    found 68 events total
-    found 5 events last year
-    spent a total of 7.25 hours at events last year
 
 # Functional requirements
 
@@ -65,18 +60,19 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
   - time spent at events per group
   - etc.
 
-# Nonfunctional requirements
-
-- static quality attributes: testability, maintainability, etc.
-- dynamic quality attributes: performance, scalability, reliability, etc.
-- frictionless solution stack based on best practices and community support
-
 # Learning objectives
 
 - provide exemplars of API client connectors suitable for learning
 - include basic, easy-to-understand blocking implementations as starting points
 - include advanced nonblocking/async implementations as next steps
 - maintain a polyglot mindset by focusing on patterns
+- show how to handle common scenarios in functional yet highly readable ways
+
+# Nonfunctional requirements
+
+- static quality attributes: testability, maintainability, etc.
+- dynamic quality attributes: performance, scalability, reliability, etc.
+- frictionless solution stack based on best practices and community support
 
 # Dependencies/solution stack
 
