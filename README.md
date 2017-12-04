@@ -80,6 +80,16 @@ See also the [Meetup API v3 documentation](https://www.meetup.com/meetup_api/doc
 
 # Dependencies/solution stack
 
+The ongoing goal is to put together a solution stack that meets the following criteria:
+
+- low-friction
+- grounded in best practices
+- lightweight/embeddable
+
+Although [Play](https://playframework.com/) is a full-stack framework, it is easy to pick a-la-carte only the components one needs,
+including the brilliant [string interpolating routing DSL (sird)](https://www.playframework.com/documentation/2.6.x/ScalaSirdRouter),
+and embed them in a basic sbt project.
+
 - Play framework (Scala) including
   - play-ahc-ws (HTTP client)
   - play-akka-http-server

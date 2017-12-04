@@ -5,7 +5,7 @@ import org.specs2.mutable._
 class MeetupEndToEndTest extends Specification {
 
   "This end-to-end test" should {
-    "run" in {
+    "just run" in {
       true
     }
   }
