@@ -120,7 +120,7 @@ object OAuth2 {
         logger.debug(tokenArgs.toString)
         wsClient.url(TokenUrl).post(tokenArgs)
       }
-    } yield {
+    } {
       Try {
         val json = Json.parse(response.body)
         logger.debug(Json.prettyPrint(json))
