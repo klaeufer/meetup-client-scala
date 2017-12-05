@@ -4,6 +4,7 @@ scala: 2.12.4
 script: sbt coverage test:test it:test coverageReport
 after_success: bash <(curl -s https://codecov.io/bash)
 before_deploy:
+  - sbt stage
   - wget https://cli-assets.heroku.com/heroku-cli/channels/stable/heroku-cli-linux-x64.tar.gz -O heroku.tar.gz
   - tar -xzf heroku.tar.gz
   - ./heroku-cli-v6.14.39-addc925-linux-x64/bin/heroku local &
