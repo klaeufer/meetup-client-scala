@@ -18,15 +18,11 @@ trait MeetupAPIClient {
   def logger: Logger
 
   implicit def system: ActorSystem
-
   implicit val mat = ActorMaterializer()
-
   def wsClient: AhcWSClient
 
   implicit val groupFormat = Json.format[Group]
-
   implicit val eventFormat = Json.format[Event]
-
   implicit val effortWrites = new Writes[Effort] {
     def writes(effort: Effort) = Json.obj(
       "from" -> effort.from.getMillis,

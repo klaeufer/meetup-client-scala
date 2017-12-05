@@ -18,13 +18,11 @@ object WebService extends MeetupAPIClient {
   override val logger = Logger[WebService.type]
 
   override def system = ActorSystem()
-
   override def wsClient = AhcWSClient()
 
   def run(): Unit = {
 
     val port = Properties.envOrElse("PORT", DefaultWebServerPort).toInt
-
     val config = ServerConfig(
       port = Some(port),
       address = WebServerAddress

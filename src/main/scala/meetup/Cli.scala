@@ -19,7 +19,6 @@ object Cli extends MeetupAPIClient {
   val logger = Logger[Cli.type]
 
   override lazy val system = ActorSystem()
-
   override lazy val wsClient = AhcWSClient()
 
   def run(fromDate: Option[Calendar], toDate: Option[Calendar]): Unit = {
