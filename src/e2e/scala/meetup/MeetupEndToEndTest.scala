@@ -45,7 +45,7 @@ class MeetupEndToEndTest extends Specification {
         json = Json.parse(response.body)
         effort = json.as[JsObject].validate[Effort]
       } yield effort
-      Await.result(result, 5.seconds.toDuration.toScalaDuration) must be equalTo (JsSuccess(expected))
+      Await.result(result, 5.seconds.toDuration.toScalaDuration) must be equalTo JsSuccess(expected)
     }
   }
 }
