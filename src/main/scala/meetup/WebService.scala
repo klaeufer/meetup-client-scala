@@ -1,11 +1,13 @@
 package edu.luc.etl.connectorspace.meetup
 
 import akka.actor.ActorSystem
+import akka.util.ByteString
 import com.typesafe.scalalogging.Logger
 import com.github.nscala_time.time.Imports._
 import org.joda.time.DateTime.{ parse => parseDateTime }
+import play.api.http.HttpEntity
 import play.api.libs.ws.ahc.AhcWSClient
-import play.api.mvc.Results
+import play.api.mvc.{ ResponseHeader, Result, Results }
 import play.api.libs.json._
 import play.api.libs.ws.WSRequest
 import play.api.routing.sird._
@@ -61,8 +63,16 @@ object WebService extends MeetupAPIClient {
                 Results.Ok(Json.toJson(effort)),
               onParseError = response =>
                 Results.BadGateway(s"could not parse Meetup API server response as JSON: ${response.body}"),
-              onOtherError = response =>
-                Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
+              // TODO from play-framework group: utility method to convert WSResponse to Result
+              onOtherError = response => {
+                val headers = response.headers.map { h => (h._1, h._2.head) }
+                val entity = HttpEntity.Strict(
+                  ByteString(response.body.getBytes),
+                  response.headers.get("Content-Type").map(_.head)
+                )
+                Result(ResponseHeader(response.status, headers), entity)
+              },
+              // Results.BadGateway(s"received error from Meetup API server with status code ${response.status}"),
               onTimeout = ex =>
                 Results.InternalServerError(ex.getStackTrace mkString Properties.lineSeparator)
             )
