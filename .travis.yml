@@ -9,10 +9,6 @@ before_deploy:
   - tar -xzf heroku.tar.gz
   - ./heroku-cli-v6.14.39-addc925-linux-x64/bin/heroku local &
   - sbt e2e:test
-  - test_status=$?
-  - ps -ef | grep heroku
-  - pkill -f heroku
-  - exit "$test_status"
 deploy:
   provider: heroku
   app: connectorspace-meetup
