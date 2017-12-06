@@ -135,7 +135,7 @@ object OAuth2 {
         props.store(pw, "updated OAuth2 access and refresh tokens")
         Console.println("updated OAuth2 access and refresh tokens")
       } recover {
-        case _ => logger.debug("error parsing or storing access and refresh tokens")
+        case ex => logger.debug("error parsing or storing access and refresh tokens", ex)
       }
 
       wsClient.close()
