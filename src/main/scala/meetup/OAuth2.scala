@@ -50,7 +50,6 @@ object OAuth2 {
 
     val clientId = sys.env(KeyClientId)
     val clientSecret = sys.env(KeyClientSecret)
-
     logger.debug(s"$KeyClientId = $clientId")
     logger.debug(s"$KeyClientSecret = $clientSecret")
 
@@ -58,50 +57,41 @@ object OAuth2 {
     implicit val mat = ActorMaterializer()
     val wsClient = AhcWSClient()
 
+    val codePromise = Promise[String]()
+    val config = ServerConfig(
+      port = Some(RedirectServerPort),
+      address = RedirectServerAddress
+    )
+    logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
+    val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>
+      {
+        case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
+          logger.debug(s"HTTP server got $code")
+          codePromise.success(code)
+          Results.Ok("authentication succeeded, please close this tab")
+        }
+      }
+    }
+    logger.debug(s"HTTP server now running at ${config.address}")
+
+    // open the auth URI in the browser
+    // this should result in a request to the embedded server
+    val authArgs = Seq(
+      "client_id" -> clientId,
+      "response_type" -> "code",
+      "redirect_uri" -> RedirectUrl
+    )
+    val authUrlWithArgs = wsClient.url(AuthUrl).addQueryStringParameters(authArgs: _*).uri
+    if (Desktop.isDesktopSupported) {
+      logger.debug(s"opening $authUrlWithArgs with default browser")
+      Desktop.getDesktop.browse(authUrlWithArgs)
+    } else {
+      Console.println(s"to authorize this client, visit $authUrlWithArgs")
+      Console.println("in your browser and, if asked, press Allow")
+    }
+
     for { // entering Future monad
-      response <- {
-        val authArgs = Map(
-          "client_id" -> clientId,
-          "response_type" -> "code",
-          "redirect_uri" -> RedirectUrl
-        )
-        // do not follow redirects so we can open the target URI in the browser
-        wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs)
-      }
-
-      returnUri = response.headers("Location")(0)
-      codePromise = Promise[String]()
-      httpServer = {
-        val config = ServerConfig(
-          port = Some(RedirectServerPort),
-          address = RedirectServerAddress
-        )
-        logger.debug(s"creating and starting embedded HTTP server instance ${config.address}")
-        val httpServer = AkkaHttpServer.fromRouterWithComponents(config) { components =>
-          {
-            case GET(p"/" ? q"code=$code") => components.defaultActionBuilder {
-              logger.debug(s"HTTP server got $code")
-              codePromise.success(code)
-              Results.Ok("authentication succeeded, please close this tab")
-            }
-          }
-        }
-        logger.debug(s"HTTP server now running at ${config.address}")
-        httpServer
-      }
-
-      code <- {
-        // open the target URI in the browser
-        // this should result in a request to the embedded server
-        if (Desktop.isDesktopSupported) {
-          logger.debug(s"opening $returnUri with default system handler")
-          Desktop.getDesktop.browse(new URI(returnUri))
-        } else {
-          Console.println(s"to authorize this client, visit $returnUri")
-          Console.println("in your browser and, if asked, press Allow")
-        }
-        codePromise.future
-      }
+      code <- codePromise.future
 
       _ <- Future {
         logger.debug("waiting for pending request to complete before shutting down HTTP server")
