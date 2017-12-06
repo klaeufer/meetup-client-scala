@@ -17,7 +17,7 @@ import play.core.server.{ AkkaHttpServer, ServerConfig }
 
 import scala.collection.JavaConverters.propertiesAsScalaMapConverter
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Promise
+import scala.concurrent.{ Future, Promise }
 import scala.io.{ Source, StdIn }
 import scala.util.Try
 
@@ -69,8 +69,8 @@ object OAuth2 {
         wsClient.url(AuthUrl).withFollowRedirects(false).post(authArgs)
       }
 
+      returnUri = response.headers("Location")(0)
       codePromise = Promise[String]()
-
       httpServer = {
         val config = ServerConfig(
           port = Some(RedirectServerPort),
@@ -90,8 +90,6 @@ object OAuth2 {
         httpServer
       }
 
-      returnUri = response.headers("Location")(0)
-
       code <- {
         // open the target URI in the browser
         // this should result in a request to the embedded server
@@ -105,11 +103,14 @@ object OAuth2 {
         codePromise.future
       }
 
-      response <- {
+      _ <- Future {
         logger.debug("waiting for pending request to complete before shutting down HTTP server")
         Thread.sleep(200)
         httpServer.stop()
         logger.debug("HTTP server shut down")
+      }
+
+      response <- {
         val tokenArgs = Map(
           "client_id" -> clientId,
           "client_secret" -> clientSecret,
